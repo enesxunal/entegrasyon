@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     return apiSuccess({ message: "Already seeded", skipped: true });
   }
 
+  try {
   const PROTOCOL_DIR = path.join(process.cwd(), "protocol");
   const loadJson = (p: string) =>
     JSON.parse(fs.readFileSync(path.join(PROTOCOL_DIR, p), "utf-8"));
@@ -140,4 +141,10 @@ export async function POST(request: NextRequest) {
     message: "Seed completed",
     login: { email: "demo@uip.local", password: "password123" },
   });
+  } catch (error) {
+    console.error("Seed failed:", error);
+    const message =
+      error instanceof Error ? error.message : "Seed failed";
+    return apiError(`Seed failed: ${message}`, 500);
+  }
 }
