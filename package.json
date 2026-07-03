@@ -7,7 +7,7 @@
     "build": "prisma generate && prisma migrate deploy && next build",
     "postinstall": "prisma generate",
     "start": "next start",
-    "vercel-build": "bash scripts/vercel-build.sh",
+    "vercel-build": "node scripts/vercel-build.mjs",
     "lint": "next lint",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
