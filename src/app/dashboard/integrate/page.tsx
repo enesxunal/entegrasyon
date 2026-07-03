@@ -7,7 +7,17 @@ export default async function IntegratePage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const [agent, workflow, zipprConnection] = await Promise.all([
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: session.workspaceId },
+  });
+
+  const isProvider = workspace?.billingPlan === "provider";
+
+  if (isProvider) {
+    redirect("/dashboard/onboarding");
+  }
+
+  const [agent, workflow, providers, anyConnection] = await Promise.all([
     prisma.agent.findFirst({
       where: { workspaceId: session.workspaceId, status: "active" },
       orderBy: { createdAt: "asc" },
@@ -15,14 +25,17 @@ export default async function IntegratePage() {
     prisma.workflow.findFirst({
       where: { workspaceId: session.workspaceId, status: "active" },
     }),
+    prisma.provider.findMany({ orderBy: { name: "asc" }, take: 5 }),
     prisma.connection.findFirst({
-      where: {
-        workspaceId: session.workspaceId,
-        status: "active",
-        provider: { slug: "zippr_ink" },
-      },
+      where: { workspaceId: session.workspaceId, status: "active" },
+      include: { provider: true },
     }),
   ]);
+
+  const firstProvider = providers[0];
+  const connectHref = firstProvider
+    ? `/dashboard/providers/${firstProvider.slug}/connect`
+    : "/dashboard/onboarding";
 
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ?? "https://entegrasyon-zeta.vercel.app";
@@ -32,17 +45,22 @@ export default async function IntegratePage() {
     <div>
       <h1 className="mb-2 text-2xl font-bold">Sitenizi entegre edin</h1>
       <p className="mb-8 text-slate-600">
-        3 adımda sitenizi UIP&apos;ye bağlayın. Zippr.ink içine kod kurmanıza gerek
-        yok — UIP, sizin API anahtarınızla Zippr&apos;ı çağırır.
+        Servis sağlayıcıyı bağlayın, agent&apos;ınızı kurun, demo ile test edin.
       </p>
 
       <div className="mb-8 grid gap-4 md:grid-cols-3">
         <Step
           n={1}
-          title="Zippr.ink bağla"
-          done={Boolean(zipprConnection)}
-          href="/dashboard/providers/zippr-ink/connect"
-          label={zipprConnection ? "Bağlandı ✓" : "API anahtarı ekle"}
+          title={firstProvider ? `${firstProvider.name} bağla` : "Servis ekle (AI)"}
+          done={Boolean(anyConnection)}
+          href={connectHref}
+          label={
+            anyConnection
+              ? `Bağlandı: ${anyConnection.provider.name} ✓`
+              : firstProvider
+                ? "API anahtarı ekle"
+                : "AI Kurulum ile servis ekle"
+          }
         />
         <Step
           n={2}
@@ -60,21 +78,29 @@ export default async function IntegratePage() {
         />
       </div>
 
+      {providers.length === 0 && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+          Ekosistemde henüz servis yok. Zippr veya başka bir servis sağlayıcı{" "}
+          <Link href="/register/provider" className="underline">
+            kayıt olup
+          </Link>{" "}
+          AI Kurulum ile manifest eklemeli — veya siz{" "}
+          <Link href="/dashboard/onboarding" className="underline">
+            AI Kurulum
+          </Link>{" "}
+          ile ekleyebilirsiniz.
+        </div>
+      )}
+
       <div className="mb-6 rounded-xl border bg-white p-6">
-        <h2 className="mb-4 font-semibold">Zippr.ink modu</h2>
+        <h2 className="mb-4 font-semibold">Optimizasyon modu</h2>
         <p className="text-sm text-slate-600">
           Sunucu modu: <strong>{zipprMode === "mock" ? "demo (sahte)" : "gerçek"}</strong>
           {zipprMode === "mock" && (
             <span>
               {" "}
-              — demo sahte optimizasyon kullanır. Gerçek Zippr için Vercel&apos;de{" "}
+              — demo sahte optimizasyon kullanır. Gerçek API için Vercel&apos;de{" "}
               <code className="text-xs">ZIPPR_MODE=real</code> ayarlayın.
-            </span>
-          )}
-          {zipprMode === "real" && !zipprConnection && (
-            <span className="text-amber-700">
-              {" "}
-              — gerçek mod açık ama bu çalışma alanında henüz API anahtarı yok.
             </span>
           )}
         </p>
@@ -100,27 +126,7 @@ export default async function IntegratePage() {
         </div>
       )}
 
-      <div className="rounded-xl border bg-slate-900 p-6 text-slate-100">
-        <h2 className="mb-2 font-semibold">Sunucu tarafı örneği</h2>
-        <p className="mb-4 text-sm text-slate-400">
-          Sitenize biri görsel yüklediğinde sunucunuz imzalı bir olay gönderir:
-        </p>
-        <pre className="overflow-auto rounded bg-slate-800 p-4 text-xs">
-{`npm run agent:test -- --image-url="https://siteniz.com/gorsel.jpg"
-
-# POST ${appUrl}/api/agent/events
-# Başlıklar: X-Agent-Id, X-Timestamp, X-Nonce, X-Signature
-# Gövde: { "event_type": "image.uploaded", ... }`}
-        </pre>
-      </div>
-
-      <div className="mt-6 flex gap-4">
-        <Link
-          href="/dashboard/onboarding"
-          className="rounded-lg border px-4 py-2 text-sm font-medium"
-        >
-          AI ile manifest üret
-        </Link>
+      <div className="mt-6 flex flex-wrap gap-4">
         <Link
           href="/demo/customer-site"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white"
@@ -128,16 +134,10 @@ export default async function IntegratePage() {
           Demo sitede test et
         </Link>
         <Link
-          href="/docs/zippr-integration"
+          href="/dashboard/onboarding"
           className="rounded-lg border px-4 py-2 text-sm font-medium"
         >
-          Zippr + UIP dokümantasyonu
-        </Link>
-        <Link
-          href="/docs/guvenlik"
-          className="rounded-lg border px-4 py-2 text-sm font-medium"
-        >
-          Güvenlik modeli
+          AI Kurulum
         </Link>
       </div>
     </div>

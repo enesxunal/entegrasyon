@@ -54,6 +54,18 @@ export function OnboardingWizard() {
         setModel(data.model ?? "");
       });
 
+    fetch("/api/workspaces/current")
+      .then((r) => r.json())
+      .then((data) => {
+        const ws = data.workspace;
+        if (ws?.billingPlan === "provider") {
+          setServiceType("saas_provider");
+          if (ws.name) setServiceName(ws.name);
+          setSourceType("openapi_url");
+          setOpenapiUrl("https://zippr.ink/openapi.json");
+        }
+      });
+
     fetch("/api/agents")
       .then((r) => r.json())
       .then((data) => {
@@ -143,7 +155,11 @@ export function OnboardingWizard() {
 
     setSuccess(data.message ?? "Kaydedildi");
     setTimeout(() => {
-      router.push("/dashboard/manifests");
+      router.push(
+        serviceType === "saas_provider"
+          ? "/dashboard/providers"
+          : "/dashboard/manifests"
+      );
       router.refresh();
     }, 2000);
   }

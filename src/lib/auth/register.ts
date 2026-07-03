@@ -95,17 +95,6 @@ export async function registerWorkspace(input: {
     });
   }
 
-  const workflowJson = loadJson("examples/zippr-workflow.example.json");
-  await prisma.workflow.create({
-    data: {
-      workspaceId: workspace.id,
-      name: workflowJson.name,
-      triggerEventName: workflowJson.trigger_event_name,
-      stepsJson: workflowJson.steps,
-      status: "active",
-    },
-  });
-
   const session = {
     userId: user.id,
     workspaceId: workspace.id,
@@ -121,5 +110,63 @@ export async function registerWorkspace(input: {
     workspace: { id: workspace.id, name: workspace.name },
     agent: { id: agent.id, secretPrefix: agent.secretPrefix },
     agentSecret: rawSecret,
+  };
+}
+
+export async function registerProviderWorkspace(input: {
+  email: string;
+  password: string;
+  companyName: string;
+  serviceUrl?: string;
+}) {
+  const existing = await prisma.user.findUnique({
+    where: { email: input.email },
+  });
+  if (existing) {
+    return { ok: false as const, error: "Bu e-posta zaten kayıtlı" };
+  }
+
+  const passwordHash = await bcrypt.hash(input.password, 12);
+
+  const user = await prisma.user.create({
+    data: {
+      email: input.email,
+      name: input.companyName,
+      passwordHash,
+    },
+  });
+
+  const workspace = await prisma.workspace.create({
+    data: {
+      name: input.companyName,
+      billingPlan: "provider",
+    },
+  });
+
+  await prisma.workspaceMember.create({
+    data: {
+      workspaceId: workspace.id,
+      userId: user.id,
+      role: "owner",
+    },
+  });
+
+  const session = {
+    userId: user.id,
+    workspaceId: workspace.id,
+    email: user.email,
+  };
+
+  const token = await createSession(session);
+  await setSessionCookie(token);
+
+  return {
+    ok: true as const,
+    user: { email: user.email, id: user.id },
+    workspace: {
+      id: workspace.id,
+      name: workspace.name,
+      type: "provider" as const,
+    },
   };
 }
