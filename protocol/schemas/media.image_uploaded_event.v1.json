@@ -1,0 +1,22 @@
+{
+  "$id": "media.image_uploaded_event.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["event_id", "event_type", "source", "created_at", "data"],
+  "properties": {
+    "event_id": { "type": "string" },
+    "event_type": { "type": "string", "const": "image.uploaded" },
+    "source": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "data": {
+      "type": "object",
+      "required": ["image_url"],
+      "properties": {
+        "image_url": { "type": "string", "format": "uri" },
+        "filename": { "type": "string" },
+        "mime_type": { "type": "string" },
+        "size_bytes": { "type": "number" }
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "$id": "standard.operation_result.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["success"],
+  "properties": {
+    "success": { "type": "boolean" },
+    "message": { "type": "string" },
+    "reference_id": { "type": "string" }
+  }
+}

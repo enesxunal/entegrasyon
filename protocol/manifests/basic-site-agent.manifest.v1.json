@@ -1,0 +1,27 @@
+{
+  "protocol_version": "0.1",
+  "service": {
+    "id": "basic_site_agent",
+    "name": "Basic Site Agent",
+    "type": "customer_agent",
+    "category": "website.v1"
+  },
+  "events": [
+    {
+      "name": "image.uploaded",
+      "description": "Triggered when a user uploads an image to the website.",
+      "schema_ref": "media.image_uploaded_event.v1"
+    }
+  ],
+  "capabilities": [
+    {
+      "name": "image.replace",
+      "description": "Replace or save an optimized image URL locally.",
+      "category": "media.v1",
+      "risk_level": "low",
+      "input_schema_ref": "media.image_replace_request.v1",
+      "output_schema_ref": "standard.operation_result.v1",
+      "permissions": ["images.write"]
+    }
+  ]
+}

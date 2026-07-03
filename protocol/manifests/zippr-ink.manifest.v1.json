@@ -1,0 +1,54 @@
+{
+  "protocol_version": "0.1",
+  "service": {
+    "id": "zippr_ink",
+    "name": "Zippr.ink",
+    "type": "saas_provider",
+    "category": "media.v1"
+  },
+  "auth": {
+    "type": "api_key",
+    "scheme": "bearer",
+    "header": "Authorization"
+  },
+  "base_url": "https://zippr.ink",
+  "capabilities": [
+    {
+      "name": "image.optimize",
+      "description": "Optimize an image by file upload or image URL.",
+      "category": "media.v1",
+      "risk_level": "low",
+      "input_schema_ref": "media.image_optimize_request.v1",
+      "output_schema_ref": "media.image_optimize_result.v1",
+      "endpoints": [
+        {
+          "mode": "url",
+          "method": "POST",
+          "path": "/api/v1/images/optimize-url",
+          "content_type": "application/json"
+        },
+        {
+          "mode": "file_upload",
+          "method": "POST",
+          "path": "/api/v1/images/optimize",
+          "content_type": "multipart/form-data"
+        }
+      ],
+      "permissions": ["images.read", "images.write"]
+    },
+    {
+      "name": "image.optimization_job.get",
+      "description": "Get image optimization job details.",
+      "category": "media.v1",
+      "risk_level": "low",
+      "input_schema_ref": "standard.job_get_request.v1",
+      "output_schema_ref": "media.image_optimize_result.v1",
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/v1/images/jobs/{job_id}"
+      },
+      "permissions": ["images.read"]
+    }
+  ],
+  "events": []
+}

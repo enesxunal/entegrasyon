@@ -1,0 +1,21 @@
+{
+  "$id": "media.image_optimize_result.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["job_id", "optimized_url", "status"],
+  "properties": {
+    "job_id": { "type": "string" },
+    "original_url": { "type": "string", "format": "uri" },
+    "optimized_url": { "type": "string", "format": "uri" },
+    "original_size_bytes": { "type": "number" },
+    "optimized_size_bytes": { "type": "number" },
+    "compression_ratio": { "type": "number" },
+    "format": { "type": "string" },
+    "width": { "type": "number" },
+    "height": { "type": "number" },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "processing", "completed", "failed"]
+    }
+  }
+}

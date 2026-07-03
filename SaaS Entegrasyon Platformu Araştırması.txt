@@ -1,0 +1,439 @@
+﻿Evrensel Entegrasyon Platformu (UIP): Hibrit Kontrol ve Veri Düzlemi Mimarisi Üzerine Kapsamlı Araştırma Raporu
+1. Executive Summary
+Yazılım Servisi (SaaS) pazarındaki eksponansiyel büyüme, sistemler arası entegrasyon ihtiyacını bir darboğaza dönüştürmüştür. Kurumlar ve Küçük/Orta Boy İşletmeler (KOBİ), farklı platformları (e-ticaret, e-fatura, kargo, CRM vb.) birbiriyle konuşturmak için yüksek bakım maliyetlerine katlanmakta veya veri güvenliğini riske atan aracı platformlara bağımlı kalmaktadır. Bu araştırma raporu, "bir kez entegre ol, tüm ekosisteme açıl" vizyonunu temel alan, SaaS servisleri ile web siteleri ve özel yazılımlar arasında çalışacak Evrensel Entegrasyon Platformu'nun (Universal Integration Platform - UIP) teknik, ticari ve hukuki fizibilitesini derinlemesine incelemektedir.
+Önerilen mimari, geleneksel Entegrasyon Platformu (iPaaS) çözümlerinden farklı olarak işlemleri merkezi bir sunucudan (Cloud Relay) geçirmek yerine, "Kontrol Düzlemi" (Control Plane) ve "Veri Düzlemi" (Data Plane / Local Agent) olmak üzere ikiye ayrılmış hibrit bir yapı sunmaktadır. Bu model, Kişisel Verilerin Korunması Kanunu (KVKK) ve Genel Veri Koruma Yönetmeliği (GDPR) gibi regülasyonlar karşısında müşteri verilerinin merkezi bir sistemde depolanmasını engelleyerek (zero-data retention) devrimsel bir güvenlik avantajı sağlamaktadır.
+Yapılan analizler, Model Context Protocol (MCP)1, CloudEvents3 ve Open Policy Agent (OPA)5 gibi modern standartların birleşimiyle inşa edilecek bu sistemin, Zapier, Make veya Merge.dev gibi platformların eksiklerini kapatabileceğini göstermektedir. Türkiye e-fatura/e-ticaret dikeyi, Minimum Uygulanabilir Ürün (MVP) için kusursuz bir test alanı sunarken; platformun deterministik iş akışı motorları (Trigger.dev), asimetrik ajan kimlik doğrulaması ve kategori bazlı ontoloji yapısı ile teknik açıdan son derece uygulanabilir ve ölçeklenebilir olduğu sonucuna varılmıştır.
+2. Market Landscape
+SaaS entegrasyon ve iPaaS pazarı, dijital dönüşüm projelerinin hızlanmasıyla devasa bir hacme ulaşmıştır. 2025 yılı itibarıyla küresel iPaaS pazarının büyüklüğü yaklaşık 15.63 milyar USD ile 17.64 milyar USD arasında değerlendirilmekte olup, pazarın 2034-2035 yıllarına kadar %24 ila %34 arasında değişen Yıllık Bileşik Büyüme Oranı (CAGR) ile 108.76 milyar USD ile 292.9 milyar USD bandına ulaşması öngörülmektedir7. Kurumsal firmalar ortalama 897 farklı uygulama kullanmakta, ancak bu uygulamaların yalnızca %29'u birbiriyle entegre durumdadır10.
+Mevcut sistemlerin çözdüğü problemler ve yarattığı yeni darboğazlar şu şekilde özetlenebilir: Geleneksel platformlar (Zapier, Make, Workato), son kullanıcılar ve IT ekipleri için görsel iş akışı araçları sunarak API karmaşasını gizler. Ancak bu sistemler, veriyi kendi sunucularından geçirir ve işler11. Pipedream ve Tray.io geliştirici odaklı otomasyon sağlasa da, verinin platform dışına çıkışı KVKK/GDPR risklerini artırır. Merge.dev ve Apideck gibi "Unified API" (Birleşik API) sağlayıcıları ise SaaS firmalarının yüzlerce platformla tek tek entegre olma yükünü hafifletmeyi hedefler12. Ne var ki, Merge.dev müşteri verilerini kendi veritabanlarında senkronize edip saklayarak (sync-and-store) büyük bir güvenlik ve maliyet bariyeri oluştururken, Apideck veriyi önbelleğe almadan (pass-through) ileterek daha güvenli bir alternatif sunar11. Apideck'in modeli tüketici başına (consumer-based) ücretlendirme ile ölçeklenirken, Merge.dev bağlı hesap başına (linked account) yüksek ücretler talep etmektedir11.
+Özel yazılımlar, WordPress/WooCommerce kullanan küçük e-ticaret siteleri ve KOBİ'ler için bu pazar dinamikleri ciddi sorunlar yaratmaktadır. Bir e-ticaret sitesi e-fatura, kargo ve SMS entegrasyonları için her bir sağlayıcıya özel eklentiler satın almak, bu eklentilerin API değişikliklerinde kırılmasını izlemek ve veri uyuşmazlıklarıyla (mapping hataları) boğuşmak zorundadır15. SaaS sağlayıcıları (örneğin Paraşüt, Bizim Hesap) ise müşteri tabanını genişletmek için WooCommerce, Shopify, Magento, OpenCart gibi onlarca farklı platforma ayrı eklentiler geliştirmek ve bakımını yapmak zorunda kalmaktadır17.
+Önerilen "Local Agent" mimarisine dayalı evrensel protokol, Embedded iPaaS ve Unified API kavramlarını birleştirerek farklılaşmaktadır. Bu ürün, Zapier/Make'ten veriyi merkezde işlememesi ve saklamamasıyla, Merge.dev'den maliyet modeli ve veritabanı senkronizasyonu yapmamasıyla ayrışır. Sistem, yalnızca olayların (events) uç noktadan uç noktaya (end-to-end) akışını yöneten bir orkestrasyon ve politika (policy) katmanı olarak görev yapar.
+3. Competitor Analysis Table
+Entegrasyon ekosistemindeki aktörler; iPaaS, Unified API, API Gateway ve Workflow Runtime olmak üzere farklı kategorilerde hizmet vermektedir. Aşağıdaki analiz, pazarın mevcut durumunu ve önerilen sistemin ayrışma noktalarını detaylandırmaktadır.
+
+
+Ürün / Sistem
+	Hedef Müşteri
+	Entegrasyon Modeli
+	Veriyi İşler/Saklar mı?
+	Local Agent Var mı?
+	Marketplace Var mı?
+	Önerilen Fikre Benzerliği
+	Farklılaşma Fırsatı
+	Zapier / Make
+	Son kullanıcı, KOBİ
+	P2P Trigger-Action (Görsel)
+	Evet (Veri geçer ve loglanır)
+	Hayır
+	Evet (Binlerce)
+	Olay bazlı tetikleme
+	Local agent ile veri gizliliği, sıfır veri saklama politikası.
+	n8n
+	Geliştiriciler, IT
+	Düğüm tabanlı P2P
+	Self-hosted versiyonda hayır
+	Evet (Self-hosted)
+	Evet
+	Sunucu kurulumu ile gizlilik
+	Ağır n8n sunucusu yerine hafif SDK/Eklenti tabanlı ajan modeli.
+	Workato
+	Enterprise (Kurumsal)
+	Enterprise iPaaS
+	Evet
+	Evet (On-prem agent)
+	Evet
+	Kurumsal iş akışları
+	Çok daha düşük maliyetli ve KOBİ odaklı hafif ajan mimarisi.
+	Merge.dev
+	B2B SaaS Şirketleri
+	Unified API (Caching)
+	Evet (Veriyi sürekli çeker ve saklar)
+[cite: 11]
+	Hayır
+	Evet
+	Ortak veri modelleri
+	Veriyi saklamadan (zero-retention) doğrudan iletim, yüksek ölçeklenebilirlik11.
+	Apideck
+	B2B SaaS Şirketleri
+	Unified API (Pass-through)
+	Hayır (Sadece pass-through)11
+	Hayır
+	Evet
+	Veri saklamama, anlık iletim
+	Merkezi bulut rölesi yerine uç noktalarda (local) çalışan dağıtık mimari.
+	Boomi
+	Enterprise (Kurumsal)
+	iPaaS (Dağıtık Mimari)
+	Atom kullanılırsa Hayır20
+	Evet (Boomi Atom)
+[cite: 22]
+	Evet
+	Control/Data Plane ayrımı21
+	Modern, açık kaynaklı geliştirici dostu manifestler ve KOBİ odaklılık.
+	Temporal
+	Yazılım Mühendisleri
+	Durable Execution Runtime
+	Evet (Event history saklanır)23
+	Evet (Worker)
+	Hayır
+	Güvenilir durum yönetimi
+	Temporal'in karmaşık worker yapısı yerine yönetilen (managed) altyapı.
+	Trigger.dev
+	TS Geliştiricileri
+	Managed Background Tasks
+	Hayır (Uçtan uca şifreleme opsiyonu)
+	Evet (Worker)
+	Hayır
+	Checkpoint-resume altyapısı24
+	Altyapının sadece orkestrasyon için kullanılıp, iş mantığının uçlarda çalışması.
+	Airbyte / Fivetran
+	Veri Mühendisleri
+	ELT / Data Integration
+	Evet
+	Evet (Açık kaynak)
+	Evet
+	Kaynaktan hedefe veri akışı
+	Analitik (ETL) yerine operasyonel (API) entegrasyon odaklılık.
+	Open Policy Agent
+	Platform Mühendisleri
+	Policy Engine
+	Hayır
+	Evet (Sidecar)
+	Hayır
+	Capability yetki kontrolü5
+	OPA'nın ajanların API yetkilerini kısıtlayan bir denetçi olarak platforma gömülmesi.
+	MCP (Anthropic)
+	AI Ajanları
+	Context/Tool Protocol
+	Hayır
+	Hayır (Standart)
+	Hayır
+	Evrensel tool/manifest dili1
+	MCP standardının yapay zeka yerine deterministik SaaS entegrasyonlarında kullanılması.
+	Boomi'nin "Atom" mimarisi, kontrol düzlemi (Control Plane) ile veri düzlemini (Data Plane) ayırma konusunda en net ilham kaynağıdır. Boomi, kurumsal müşteriler için güvenlik duvarı (firewall) arkasına kurulan Atom'lar ile verinin merkezi buluta gitmesini engeller20. Önerilen ürün, Boomi'nin bu kurumsal mimarisini alıp, Apideck'in "Unified API" sözlükleriyle harmanlayarak, e-ticaret siteleri ve özel yazılımlar için dakikalar içinde kurulabilen hafif bir "Ajan/SDK" sistemine dönüştürecektir.
+4. Technical Architecture Recommendation
+Güvenlik ve izolasyon gereksinimleri, sistemin birbirinden tamamen bağımsız iki temel mimari katmandan oluşmasını zorunlu kılmaktadır.
+1. Control Plane (Merkezi Bulut Orkestratörü)
+Control Plane, sistemin beynidir ancak sinir sistemindeki veriyi okuyamaz. Tamamen bulut tabanlı, ölçeklenebilir ve çok kiracılı (multi-tenant) olarak tasarlanmalıdır.
+* Görev Tanımı: Ajanların ve SaaS servislerinin kayıt defterlerini (Registry) tutar. İş akışı tanımlarını (Workflow definitions) oluşturur ve ajanlara iletir. Kimlik doğrulama, faturalandırma ve politika (policy) yönetimini üstlenir.
+* AI Destek Katmanı: Sistemdeki AI, canlı işlemlerde (runtime) kullanılmaz; tasarım zamanında (design-time) API dokümantasyonlarından JSON Schema3 çıkarmak ve haritalama (mapping) önerileri sunmak için çalışır.
+* Veri Politikası: Müşteri siparişleri, kişisel veriler (PII) ve fatura tutarları bu katmanda kesinlikle saklanmaz. Yalnızca işlemin başlama zamanı, bitiş zamanı, statüsü ve ajan ID'si gibi minimal meta veriler loglanır.
+2. Data Plane / Local Agent (Yerel Veri Düzlemi)
+Müşterinin kendi altyapısında barındırılan ve yürütülen hafifletilmiş bir modüldür. Bir WordPress eklentisi, Laravel Composer paketi veya bağımsız bir Node.js servisi olabilir.
+* Görev Tanımı: E-ticaret sitesindeki order.paid gibi olayları yakalar16. Kontrol düzleminden aldığı manifest ve haritalama kurallarına göre yerel veriyi standart protokole dönüştürür. İlgili SaaS sağlayıcısına (örneğin e-fatura firmasına) hedef isteği atar, dönen yanıtı (fatura URL'si) tekrar müşterinin yerel veritabanına kaydeder.
+* Güvenlik: API anahtarları (Secret) ve hassas veriler müşterinin yerel ortamında tutulur ve şifrelenir.
+WebAssembly (WASM) ve Extism Entegrasyonu
+Ajanların içerisinde çalışacak olan haritalama ve veri dönüştürme mantığının son derece güvenli olması gerekir. Bu noktada Extism gibi WebAssembly (WASM) eklenti sistemleri mimariye entegre edilmelidir27. Extism, yazılımın içine gömülebilen izole bir çalışma zamanı sunar. Ajan, farklı SaaS servisleri için gerekli olan dönüştürme fonksiyonlarını (WASM modülleri olarak) Control Plane'den indirir ve bunları yerel bir kum havuzunda (sandbox) çalıştırır29. Bu sayede, ajan koduna dışarıdan zararlı bir işlem sızması engellenir.
+Veritabanı Modeli Önerisi
+Sistemin Control Plane tarafındaki veritabanı şeması, çok kiracılı izolasyonu (multi-tenant isolation) PostgreSQL Satır Düzeyi Güvenlik (Row-Level Security) ile sağlayacak şekilde tasarlanmalıdır.
+
+
+Tablo Adı
+	Temel Kolonlar
+	Görev ve Güvenlik Notları
+	workspaces
+	id, name, billing_plan, created_at
+	İzolasyonun temel birimidir. Tüm diğer tablolar bu ID ile sınırlandırılır.
+	users
+	id, workspace_id, email, role, password_hash
+	Kullanıcı kimlik yönetimi. SCIM entegrasyonu ile beslenebilir31.
+	services
+	id, name, auth_type, base_url, status
+	SaaS sağlayıcı listesi (Paraşüt, Yurtiçi Kargo vb.).
+	manifests
+	id, service_id, version, schema_json
+	Servise ait manifest dosyaları. Geriye dönük uyumluluk için versiyonlanır.
+	capabilities
+	id, manifest_id, name (örn: invoice.create), input_schema, output_schema
+	OPA yetkilendirmesi için temel aksiyon birimleri. PII içermez.
+	agents
+	id, workspace_id, public_key, status, ip_address, version
+	Müşteri ajanlarının kaydı. Şifreli iletişim için asimetrik anahtarlar tutulur.
+	connections
+	id, workspace_id, service_id, agent_id, auth_metadata
+	Müşterinin bir SaaS ile bağlantısı. Sadece OAuth token referanslarını tutar.
+	secrets
+	id, workspace_id, encrypted_value, kms_key_id
+	API anahtarları. AES-GCM ile şifrelenmeli veya HashiCorp Vault kullanılmalıdır.
+	workflows
+	id, workspace_id, trigger_event, steps_json, is_active
+	İş akışı tanımları (Design-time verisi).
+	executions
+	id, workspace_id, workflow_id, agent_id, status, duration
+	Çalışma zamanı metadatası. Kesinlikle PII veya sipariş datası tutulmamalıdır.
+	audit_logs
+	id, workspace_id, actor_id, action, timestamp
+	Sistem konfigürasyon değişikliklerinin denetim kaydı.
+	policies
+	id, workspace_id, rego_code, target_agent
+	OPA (Open Policy Agent) için tanımlı kısıtlama kuralları5.
+	5. Protocol Design Recommendation
+Sistem, yepyeni bir dil icat etmek yerine endüstri standartları üzerine bir "Universal Integration Protocol" (Evrensel Entegrasyon Protokolü) inşa etmelidir.
+* Veri ve Şema Validasyonu: Olayların ve API isteklerinin doğruluğu JSON Schema standardı ile garanti altına alınmalıdır3.
+* Olay İletişimi: Sistemdeki asenkron tetikleyiciler, Cloud Native Computing Foundation (CNCF) standartı olan CloudEvents formatına uygun taşınmalıdır. Bu standart id, source, type ve datacontenttype gibi ortak alanlar sağlayarak sistemler arası uyumu artırır3.
+* Yetenek ve Araç Tanımlaması: Yapay zeka ajanları için geliştirilmiş olan Model Context Protocol (MCP), sadece AI için değil deterministik sistemler için de mükemmel bir manifest standardıdır1. MCP'nin Tools (Yetenekler) ve Resources (Kaynaklar) mantığı37, bir SaaS firmasının sunduğu hizmetleri standartlaştırmak için kullanılacaktır.
+Örnek Manifest Tasarımı (invoice.create)
+Aşağıdaki manifest, MCP'nin "Tool" mantığına ve JSON Schema'ya dayanarak e-fatura oluşturma yeteneğini tanımlar.
+
+
+
+
+
+
+JSON
+{
+ "protocol_version": "1.0",
+ "service_id": "parasut.v1",
+ "capability": "invoice.create",
+ "description": "Yeni bir e-fatura veya e-arşiv belgesi oluşturur.",
+ "category": "accounting.v1",
+ "auth_requirement": {
+   "type": "oauth2.1",
+   "scopes": ["invoices.write"]
+ },
+ "input_schema": {
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "type": "object",
+   "required": ["customer", "items", "issue_date"],
+   "properties": {
+     "invoice_number": { "type": "string" },
+     "issue_date": { "type": "string", "format": "date-time" },
+     "currency": { "type": "string", "default": "TRY" },
+     "customer": {
+       "type": "object",
+       "required": ["tax_number", "title"],
+       "properties": {
+         "title": { "type": "string" },
+         "tax_number": { "type": "string", "minLength": 10, "maxLength": 11 },
+         "address": { "type": "string" }
+       }
+     },
+     "items": {
+       "type": "array",
+       "items": {
+         "type": "object",
+         "required": ["name", "quantity", "unit_price", "tax_rate"],
+         "properties": {
+           "name": { "type": "string" },
+           "quantity": { "type": "number", "minimum": 0.01 },
+           "unit_price": { "type": "number" },
+           "tax_rate": { "type": "number", "enum": [0, 1, 10, 20] }
+         }
+       }
+     }
+   }
+ },
+ "output_schema": {
+   "type": "object",
+   "properties": {
+     "invoice_id": { "type": "string" },
+     "status": { "type": "string", "enum": ["created", "failed"] },
+     "pdf_url": { "type": "string", "format": "uri" }
+   }
+ }
+}
+
+Kategori Bazlı Ortak Dil Araştırması (Ontoloji)
+SaaS firmalarının farklı API yapılarını tekil bir dile çevirmek için kategori sözlükleri oluşturulmalıdır. Bu, "Unified API" sağlayıcılarının (Apideck, Merge.dev) en başarılı olduğu alandır12.
+* commerce.v1: E-ticaret siparişlerini kapsar. Olaylar: order.paid, order.created, order.cancelled. Temel veriler: Sipariş numarası, sepet kalemleri, müşteri bilgileri, para birimi ve kargo tutarı. WooCommerce ve Shopify veri modellerinin ortak paydası baz alınmalıdır16.
+* invoice.v1: Muhasebe ve e-fatura verilerini kapsar. Türkiye'de e-fatura oluşturmak için UBL-TR standardı zorunludur15. Bir UBL-TR faturasında zorunlu olan temel alanlar; ProfilID (Ticari/Temel), Fatura Tipi (Satış/İade), Alıcı VKN/TCKN (AccountingCustomerParty), Satıcı VKN, Fatura Kalemleri (InvoiceLine) ve Vergi Oranlarıdır (cac:TaxCategory)15. Geliştirilecek şema bu zorunlu UBL-TR alanlarını minimum düzeyde talep edecek şekilde yapılandırılmalıdır.
+* shipment.v1: Kargo gönderim süreçleri. Olaylar: shipment.create, shipment.get_status. Temel veriler: Teslimat adresi, desi/ağırlık, alıcı telefonu ve gönderi barkodu.
+6. Security and Data Privacy Architecture
+Güvenlik mimarisi sistemin pazar değerini belirleyen ana unsurdur. Müşteri verilerini saklamama hedefi, çeşitli bulut ve ajan mimarilerinin kıyaslanmasını gerektirir.
+Mimari Karşılaştırmaları
+1. Cloud Relay Mode: İşlemlerin Müşteri Sitesi -> UIP Cloud -> SaaS Sağlayıcı rotasını izlemesi. Zapier modeli olan bu yapıda kurulum kolaydır, ancak veri Control Plane üzerinden aktığı için ciddi bir KVKK/GDPR ihlali ve sızıntı riski taşır. Sadece MVP aşamasındaki mock testleri için kullanılmalıdır.
+2. Private Agent / Local Agent Mode: İşlemlerin müşterinin kendi altyapısında gerçekleştiği, Control Plane'in sadece kuralları ve manifestleri ilettiği sistem. Bu mimari, verinin müşterinin ortamında kalmasını sağlar20. Ajanların güncellenmesi ve ağ duvarları (firewall) arkasında çalışması zorluk yaratsa da güvenlik açısından tartışmasız en iyi modeldir.
+3. Hybrid Mode: İşlem hacmi yüksek veya yüksek güvenlik gerektiren (fatura kesme) senaryolarda Local Agent, basit bildirim senaryolarında (SMS atma) ise Cloud Relay kullanılması. Boomi AtomSphere bu hibrit modeli kurumsal düzeyde başarıyla uygulayan bir platformdur21.
+Öneri: MVP ve V1 sürümleri için Local Agent Mode temel alınmalıdır. Ajan ile Control Plane iletişimi, ajan tarafından başlatılan (outbound) bir Polling, Server-Sent Events (SSE)45 veya WebSocket bağlantısı üzerinden yapılmalı, böylece müşterinin firewall kurallarını değiştirmesine gerek kalmamalıdır.
+Kimlik Doğrulama ve Secret Yönetimi
+* Ajan Kimliği: Sadece ID/Secret ikilisi yeterli değildir. Her ajan kaydolduğunda asimetrik şifreleme (Public/Private Key) çifti oluşturulmalı veya karşılıklı TLS (mTLS) uygulanmalıdır. İstekler, Replay Attack (tekrar oynatma saldırısı) riskine karşı Nonce (tek kullanımlık sayı) ve Timestamp (zaman damgası) içeren HMAC ile imzalanmalıdır.
+* OAuth 2.1 Standardı: SaaS sistemlerine bağlantıda OAuth 2.0 yerine, yayınlanmak üzere olan ve daha güvenli kabul edilen OAuth 2.1 kullanılmalıdır. OAuth 2.1, güvenlik zafiyetleri yaratan "Implicit Flow" ve parola bazlı akışları tamamen kaldırmış, "Authorization Code Flow" kullanımını zorunlu kılarak PKCE (Proof Key for Code Exchange) uygulamasını tüm istemciler için standart hale getirmiştir46.
+* Secret Saklama: API anahtarları Local Agent üzerinde şifrelenmiş olarak tutulmalı veya Control Plane'de HashiCorp Vault gibi KMS (Key Management Service) destekli sistemlerde tutularak ajana anlık ve geçici olarak (short-lived tokens) iletilmelidir.
+OPA (Open Policy Agent) ile Yetkilendirme Kontrolü
+Ajanların ne yapabileceğini katı bir şekilde sınırlandırmak için CNCF'nin amiral gemisi projelerinden Open Policy Agent (OPA) ve deklaratif politika dili Rego kullanılmalıdır5. OPA, yetkilendirme mantığını uygulama kodundan ayırarak API Gateway düzeyinde bir güvenlik kalkanı sağlar5.
+Örneğin, bir ajanın sadece fatura yaratmasını ama mevcut faturaları silememesini sağlamak için Rego dilinde şu kural (policy) yazılır ve değerlendirilir32: ABAC (Öznitelik Tabanlı Erişim Kontrolü) ile ajanın bağlı olduğu kullanıcının/sistemin yetki kapsamı (scope) anlık kontrol edilir. Ajan, invoices.write yetkisine sahipken invoices.cancel isteği atarsa, OPA bu isteği anında bloke eder51.
+7. Workflow Runtime and Execution Engine
+Sistem, yapay zeka halüsinasyonlarına kapalı, deterministik ve kesintisiz bir iş akışı motoruna ihtiyaç duyar. Mevcut workflow motorları incelendiğinde üç temel mimari öne çıkmaktadır:
+1. Temporal: Sektör standardı olan bu araç, olay kaynağı (event-sourcing) ve deterministik tekrarlama (replay) özellikleri ile devasa kurumsal işlemler için tasarlanmıştır. Ancak kurulumu çok ağırdır ve worker mantığı KOBİ ajanları için karmaşıktır23.
+2. Inngest: Event-driven yapısı ile sunucusuz (serverless) ortamlarda çok güçlüdür, ancak Control/Data plane ayrımının katı olduğu yapılar için uç nokta yönetimi zor olabilir23.
+3. Trigger.dev (v3/v4): Önerilen mimari için açık ara en uygun adaydır. Trigger.dev, uzun süren iş akışlarında "Checkpoint-Resume" (kontrol noktası - devam) mimarisini kullanır24. Bir iş akışı dışarıdan yanıt beklerken (örneğin SaaS API yanıtı), tüm süreç belleğe kaydedilip dondurulur ve sunucu maliyeti yaratmaz25.
+Örnek Deterministik İş Akışı (Trigger.dev Mantığı)
+Bir order.paid olayı sisteme CloudEvent olarak ulaştığında:
+1. Step 1: Sistem order.get ile sipariş detaylarını yerel veritabanından çeker.
+2. Step 2: invoice.create yeteneği ajana tetiklenir. Ajan SaaS'a istek atar. Bu aşamada Idempotency Key (Eş etkililik anahtarı) olarak sipariş ID'si kullanılır. Böylece ağ kopsa veya işlem tekrarlansa (retry) bile fatura sağlayıcısı mükerrer (çifte) fatura oluşturmaz25.
+3. Step 3: Fatura başarıyla oluşunca invoice.get_pdf çağrılır.
+4. Step 4: Dönen PDF URL'si order.mark_invoiced yeteneği ile yerel sisteme (örn: WooCommerce) kaydedilir.
+Bu akış boyunca, Control Plane'deki loglama sisteminde asıl veriler maskelenerek (Sensitive payload redaction) sadece adım süreleri ve HTTP durum kodları saklanır.
+8. AI’ın Rolü ve Sınırları
+Entegrasyon sistemlerinde AI kullanımı büyük bir cazibe yaratsa da, finansal ve ticari sistemlerde Otonom Yapay Zeka (Agentic Workflows) ölümcül riskler taşır (örneğin hatalı para transferleri veya yanlış fatura iptalleri). Bu nedenle sistem "Manifest-Driven" (Manifest güdümlü) çalışmalı, AI sadece yardımcı araç olarak konumlandırılmalıdır.
+AI'ın Kullanılacağı Etkili Aşamalar:
+* SaaS sağlayıcılarının karışık API dokümantasyonlarını okuyarak, bunları standart UIP / MCP manifestlerine dönüştürmek1.
+* İki farklı JSON şeması (örneğin WooCommerce siparişi ile UBL-TR e-fatura şeması) arasındaki veri eşleştirmelerini (Field mapping) taslak olarak geliştiriciye önermek.
+* İşlem sırasında oluşan hata loglarını analiz edip, kök nedeni (örn: "Vergi numarası eksik girilmiş") insan dilinde açıklamak.
+AI'ın Kesinlikle Kullanılmayacağı Aşamalar:
+* Canlı trafik esnasında payload üzerinde tahminleme yaparak veriyi dönüştürmek.
+* Kritik fatura, ödeme veya sipariş işlemlerinde otonom (insan onayı olmadan) yönlendirme yapmak.
+Bu yaklaşım, OpenAI Tool Calling veya LangChain ajanlarından farklı olarak, operasyonun her zaman öngörülebilir (deterministik) kalmasını garanti altına alır.
+9. MVP Scope: Türkiye E-Fatura/E-Ticaret Dikeyi
+Türkiye pazarı, KOBİ'lerin e-ticaret siteleri ile ön muhasebe/e-fatura programlarını bağlama ihtiyacı sebebiyle, sistemin ürün-pazar uyumunu (Product-Market Fit) kanıtlamak için mükemmel bir laboratuvardır.
+Pazar Dinamikleri ve Sorunlar: WooCommerce veya Shopify kullanan işletmeler, e-fatura kesebilmek için Paraşüt, Bizim Hesap, Logo veya GİB İnteraktif Portal gibi platformları kullanmaktadır17. Mevcut durumda satıcılar, bu entegrasyonlar için ayrı eklentiler satın almakta18 veya Sopyo, Entegrado gibi ara yazılımlara bağımlı kalmaktadır17. Türkiye'de e-fatura oluşturmak UBL-TR standardına tabidir ve VKN, Vergi Dairesi, KDV Oranı, Alıcı Bilgileri gibi zorunlu alanlar gerektirir15. E-fatura entegratörleri (Bizim Hesap, Paraşüt), UBL XML şeması yerine geliştiricilere JSON tabanlı REST API'ler sunarak işlemleri kolaylaştırmaktadır61.
+MVP Değer Teklifi: "SaaS firmalarına: Sisteme bir kez bağlanın, binlerce WooCommerce/Shopify mağazasına anında erişin. KOBİ'lere: Ajanımızı kurun, istediğiniz ön muhasebe yazılımını saniyeler içinde bağlayın."
+Örnek MVP Akışı:
+1. KOBİ'nin WooCommerce sitesinde sipariş ödemesi alınır.
+2. WooCommerce üzerinde çalışan Local Agent, order.paid olayını algılar. API Anahtarları (Consumer/Secret Key) aracılığıyla veriyi okur16.
+3. Ajan, sipariş verisini UIP standard.order.v1 formatına dönüştürür.
+4. Trigger.dev24 tabanlı merkezi workflow, ajana invoice.create yeteneğini çalıştırması için sinyal gönderir.
+5. Ajan, Paraşüt veya Bizim Hesap API'sine doğrudan istek atarak (veri buluta gitmeden) faturayı oluşturur19.
+6. SaaS'dan dönen invoice_number bilgisi, ajan tarafından WooCommerce siparişine "Faturalandı" notuyla eklenir17.
+7. Merkezi Control Plane'de yalnızca "İşlem 2.3 saniyede başarıyla tamamlandı" şeklinde meta veri loglanır.
+10. Technical MVP ve Geliştirme Planı
+Geliştirme sürecinin hızlı ilerlemesi için Cursor ve AI asistanları kullanılacaktır.
+Önerilen Teknoloji Yığını (Stack): Next.js (Dashboard), TypeScript (Backend & Agent), PostgreSQL (Prisma ORM), Redis, Trigger.dev (Workflow Motoru)25, Ajv (JSON Schema Validation), Extism (İleriki aşamada WASM için)28.
+3 Günlük Prototip Planı
+* Gün 1: Veritabanı modeli Prisma ile çizilecek (workspace, agent, capability). invoice.create için JSON Schema manifest standardı belirlenecek. Sistemde çalışacak "Mock" (sahte) bir Paraşüt API sağlayıcısı oluşturulacak.
+* Gün 2: Trigger.dev kurularak workflow çalışma zamanı oluşturulacak25. Mock bir e-ticaret siparişi gönderen (Local Agent simülasyonu) Node.js betiği yazılacak ve bu betiğin order.paid olayını fırlatması sağlanacak. Ajv ile gelen verinin schema validasyonu test edilecek.
+* Gün 3: Next.js ile basit bir dashboard arayüzü kodlanacak. İşlem loglarının (sadece meta veri, PII olmadan) listelenmesi sağlanacak. Sistem uçtan uca çalıştırılarak demo videosu kaydedilecek.
+30 Günlük MVP Planı
+* Simüle edilmiş ajan yerine gerçek bir PHP/WordPress (WooCommerce) eklentisi geliştirilecek.
+* Gerçek bir e-fatura API'sine (Paraşüt veya Bizim Hesap) entegrasyon sağlanacak61.
+* OAuth 2.1 yetkilendirme mekanizması altyapıya eklenecek46.
+* Hata loglarındaki hassas verileri temizleyen (Data redaction) algoritmalar devreye alınacak.
+90 Günlük Ürün Yol Haritası
+* Ajanın farklı dillerde (Node.js, Laravel, Python) SDK paketleri yayınlanacak.
+* SCIM (RFC 7643) standardı entegre edilerek, B2B SaaS'lar için Active Directory ve IdP (Okta vb.) üzerinden kullanıcı yetkilendirme (User Provisioning) desteği sağlanacak31. SCIM ile /Users ve /Groups endpointleri yönetilecek31.
+* OPA (Open Policy Agent) entegrasyonu tamamlanarak, Rego dili ile ajanların API üzerindeki yetki kapsamları (scope) kurallara bağlanacak5.
+11. İş Modeli ve Fiyatlandırma
+Mevcut iPaaS platformları (Zapier, Make) API çağrısı (Task) bazlı çalışır. Merge.dev gibi Unified API çözümleri ise "Bağlı Hesap" başına (Linked Account - aylık ~65$) veya tüketici başına (Apideck - 25 tüketici için ~599$) oldukça yüksek B2B ücretler talep etmektedir11. Önerilen ürünün KOBİ pazarında yıkıcı (disruptive) olabilmesi için farklı bir model izlenmelidir.
+* Platform Maliyet Avantajı: Veri işleme yükü müşterinin sunucusundaki Local Agent'a devredildiği için, Control Plane'in sunucu maliyetleri rakiplere kıyasla olağanüstü düşüktür.
+* KOBİ ve E-Ticaret Paketi: Workflow veya veri boyutu limiti olmayan, sadece "Aktif Ajan" sayısına dayalı sabit ücretlendirme (örn. mağaza başına aylık 15-25$). E-fatura gibi yüksek işlem hacimli (işlem bazlı) senaryolarda task limitlerinin olmaması KOBİ'ler için büyük bir cazibe yaratır.
+* SaaS Sağlayıcı (Partner) Paketi: Kendi sistemlerine entegre olmak isteyen SaaS sağlayıcılarına (Kargo, SMS, Fatura firmaları) özel onaylı konektör (Certified Connector) listeleme ücreti veya bu kanaldan gelen yeni müşteri kazanımı (Lead) üzerinden gelir paylaşımı (Revenue Share).
+* Enterprise Paketi: Çok uluslu şirketler için OPA policy kurallarının özelleştirilebildiği, SCIM ile Active Directory yönetiminin yapıldığı64, Kendi Altyapında Barındır (Self-hosted Control Plane) imkanı sunulan lisans modeli.
+12. Hukuki ve Uyumluluk Riskleri (Legal & Compliance)
+* KVKK ve GDPR Kapsamı: Kişisel verilerin (PII) müşteri sunucusundan çıkıp doğrudan SaaS sağlayıcısına (veri işleyene) gitmesi, UIP platformunu yasal olarak çok avantajlı bir konuma yerleştirir. UIP, veriyi saklamadığı ve depolamadığı için asıl "Veri İşleyen" (Data Processor) rolünden ziyade, yönlendirme sağlayan bir köprü görevi görür. Yine de güvenliği temin etmek adına Veri İşleme Sözleşmesi (Data Processing Agreement - DPA) imzalanmalıdır.
+* Sıfır Veri Saklama (Zero Data Retention): Sistemin en büyük hukuki argümanı, "Sunucularımızda hiçbir sipariş detayı, müşteri bilgisi veya finansal veri kalıcı veya geçici (cache) olarak tutulmamaktadır" olacaktır11.
+* Denetim (Audit) Logları Politikası: Sistemdeki loglar sadece işlem metadatası (execution_id, status: success, agent_id, duration) içermelidir. Olası API hata mesajlarında dönebilecek TCKN, ad-soyad gibi veriler, veritabanına yazılmadan önce RegEx veya NLP tabanlı maskeleme (Redaction Policy) araçlarıyla temizlenmelidir.
+13. Risk Analizi
+
+
+Risk Tanımı
+	Olasılık
+	Etki
+	Önlem / Mitigasyon
+	Çözüm Aşaması
+	SaaS API'lerinin Güncellenmesi
+	Yüksek
+	Yüksek
+	Manifest versiyonlama (invoice.v1, v2). AI ile API doküman değişikliklerini anlık tarama ve uyarı sistemi.
+	V1'de çözülmeli
+	Local Agent Güncelleme/Yönetim Zorluğu
+	Orta
+	Orta
+	Ajanların eski versiyonlarla geriye dönük uyumlu çalışabilmesi ve merkezi panelden uyarı gönderilmesi.
+	V1'de çözülmeli
+	Mükerrer (Çifte) Fatura/İşlem Oluşumu
+	Orta
+	Yüksek
+	İş akışlarında (Trigger.dev) kesinlikle Idempotency Key (Sipariş ID vb.) kullanımı zorunlu tutulmalıdır25.
+	MVP'de kritik
+	OAuth / API Key Sızıntısı
+	Düşük
+	Kritik
+	Token'ların şifreli (AES-GCM/Vault) tutulması. OPA ile ajanların sadece izin verilen uç noktalara gitmesinin garanti edilmesi5.
+	Mimari aşama
+	AI Halüsinasyonları ile Hatalı Manifest
+	Düşük
+	Yüksek
+	AI'ın sadece "taslak" üretmesi, tüm manifestlerin sisteme girmeden insan (developer) onayından geçmesi.
+	MVP tasarımı
+	Ajanların Güvenlik Duvarlarına (Firewall) Takılması
+	Yüksek
+	Orta
+	Ajanların içeriye port açmak yerine, dışarıya doğru (outbound) WebSockets veya Polling ile istek yapması.
+	V1'de çözülmeli
+	14. Sonuç ve Öneriler (Final Recommendation)
+Araştırma sorularına istinaden nihai tespitler aşağıda özetlenmiştir:
+1. Teknik Uygulanabilirlik: Sistem teknik olarak kesinlikle uygulanabilir. CloudEvents3, MCP1, Extism (WASM)27 ve OPA (Rego)5 standartları böyle bir mimarinin sağlam temeller üzerine oturmasını sağlar.
+2. Ticari Anlamlılık: Merge.dev ve Zapier gibi platformların fiyatlandırma ve veri güvenliği konusundaki dezavantajları11, sıfır veri saklama politikası ve düşük sunucu maliyetine sahip Local Agent modeli ile KOBİ ve B2B SaaS pazarında büyük bir boşluğu dolduracaktır.
+3. Başlangıç Pazarı: Türkiye e-ticaret ekosisteminde WooCommerce üzerinden e-fatura (Bizim Hesap, Paraşüt vb.) entegrasyonu, aciliyeti en yüksek ve dönüşümü en hızlı olacak başlangıç dikeyidir17.
+4. İlk MVP Kapsamı: WooCommerce order.paid olayının, Trigger.dev24 üzerinden yönetilerek Paraşüt/Bizim Hesap API'sinde invoice.create eylemine dönüşmesi ve sonucun meta veri olarak raporlanması.
+5. Protokolün İlk Versiyonu: Temelde JSON Schema tabanlı girdi/çıktı (input/output) tanımlarını barındıran, MCP'nin yetenek (Tool) mimarisine dayanan38, kategori bazlı (örn: invoice.v1) manifestlerden oluşmalıdır.
+6. Güvenlik Mimarisi: OPA (Open Policy Agent) API gateway seviyesine kurularak yetkilendirme (ABAC) denetimi yapmalı6, veri iletimi sadece Local Agent üzerinden dışarı (outbound) doğru akacak şekilde kurgulanmalı, OAuth 2.1 kuralları (PKCE) uygulanmalıdır46.
+7. Veriyi Saklamadan Çalışmak: Mümkündür ve sistemin temel farklılaştırıcı özelliğidir. Veri, uçtan uca Control Plane'i by-pass ederek akar; Boomi'nin kurumsal Atom mimarisi21 ve Apideck'in pass-through modeli11 bunun başarılı örnekleridir.
+8. Farklılaşma: Rakipler veriyi çeker, depolar ve dönüştürür. Bu ürün ise sadece kuralları yönetir (Orkestrasyon) ve işi uç noktaya (Edge/Local) devreder.
+9. En Büyük Risk: Dağıtık mimarinin getirdiği bakım zorluğu (müşteri sunucularındaki ajanların güncel tutulması ve ağ iletişim sorunları) ile API güncellemelerinde yaşanacak şema kırılmalarıdır.
+10. 3 Günlük Prototip: Veritabanı şemasının ayağa kaldırılması, JSON Schema manifestlerin yazılması, Trigger.dev entegrasyonunun25 yapılması ve Mock verilerle uçtan uca akışın test edilmesi.
+11. 30 Günlük MVP: Gerçek bir WordPress/PHP eklentisinin ajan olarak çalıştırılıp, Paraşüt/Bizim Hesap API'sine61 ilk faturanın uçtan uca kesilmesi ve dashboard üzerinden loglanması.
+12. 90 Günlük Yol Haritası: SDK dillerinin artırılması, Extism ile WASM tabanlı güvenli sandbox ortamına geçiş27, SCIM entegrasyonu ile64 B2B kimlik yönetimi sağlanması.
+13. Konumlandırma Cümlesi: "Verinizi kendi sunucunuzda tutan, sıfır veri saklama (zero-data retention) politikasıyla çalışan, tek bir evrensel protokolle tüm SaaS dünyasına bağlanmanızı sağlayan yeni nesil yerel entegrasyon ağı."
+14. Yatırımcıya/Müşteriye Anlatım: Yatırımcıya "Veri gizliliği regülasyonlarını (GDPR/KVKK) teknik olarak çözen, Zapier'in maliyetli bulut modelini Local Agent ile yıkan altyapı", müşteriye ise "Mevcut sisteminize yük getirmeyen, e-fatura/kargo maliyetlerinizi sıfıra indiren tak-çalıştır güvenlik köprüsü" olarak sunulmalıdır.
+15. Teknik Ekibin Karar Vermesi Gerekenler: Trigger.dev bulut sürümü mü yoksa Self-hosted sürümü mü kullanılacak24? Ajan ile bulut arasındaki haberleşme WebSockets ile mi yoksa HTTP Polling ile mi yapılacak? Veritabanı izolasyonu için PostgreSQL RLS (Row-Level Security) standartları nasıl belirlenecek?
+Sadece bilgi amaçlıdır. Tıbbi tavsiye veya teşhis için bir uzmana danışın.
+Alıntılanan çalışmalar
+1. Model Context Protocol (MCP) Tool Descriptions Are Smelly! Towards Improving AI Agent Efficiency with Augmented MCP Tool Descriptions - arXiv, https://arxiv.org/html/2602.14878v3
+2. Model Context Protocol: How AI Agents Connect to Your Data - Comet, https://www.comet.com/site/blog/model-context-protocol/
+3. spec/cloudevents/formats/json-format.md at main - GitHub, https://github.com/cloudevents/spec/blob/main/cloudevents/formats/json-format.md
+4. CloudEvents Specification - GitHub, https://github.com/cloudevents/spec
+5. What Is Open Policy Agent? Best Practices and Use Cases - Orca Security, https://orca.security/resources/blog/what-is-open-policy-agent/
+6. How to Implement Secure Access Control with OPA and Kong, https://konghq.com/blog/engineering/secure-access-control-with-opa-and-kong
+7. Integration Platform as a Service [iPaaS] Market Size, 2034 - Fortune Business Insights, https://www.fortunebusinessinsights.com/integration-platform-as-a-service-ipaas-market-109835
+8. Integrated Platform as a Service (iPaaS) Market Report 2026, https://www.researchandmarkets.com/reports/5988426/integrated-platform-service-ipaas-market-report
+9. Integration Platform as a Service (iPaaS) Market Size to Hit USD 292.9 Billion by 2035, https://www.precedenceresearch.com/integration-platform-as-a-service-market
+10. Data Integration Statistics - you must know in 2026 - Peliqan, https://peliqan.io/blog/data-integration-stats/
+11. Merge vs Apideck: Which Unified API is Better in 2026? | Truto Blog, https://truto.one/blog/merge-vs-apideck-which-unified-api-is-better-in-2026/
+12. Merge vs. Apideck, https://www.merge.dev/vs/apideck
+13. Unified.to Alternatives: A Technical Overview for 2026 - Apideck, https://www.apideck.com/blog/unified-to-alternatives
+14. Best Unified API Platforms for SaaS Integration in 2026 - Sylus AI, https://www.sylus.ai/feeds/blog/best-unified-api-platform-connecting-saas-applications-2025
+15. UBL-TR E-Fatura Formatı: Zorunlu Alanlar ve Sık Yapılan Hatalar - Temasis, https://www.temasis.net/blog/ubl-tr-e-fatura-formati-zorunlu-alanlar-ve-sik-yapilan-hatalar
+16. WooCommerce Entegrasyonu Nedir, Nasıl Yapılır? Genel Rehber - Sentos, https://www.sentos.com.tr/woocommerce-entegrasyonu-nedir-nasil-yapilir/
+17. WooCommerce Muhasebe Entegrasyonu Nedir? Nasıl Kurulur? - Sopyo, https://www.sopyo.com/blog/woocommerce-muhasebe-entegrasyonu-nedir
+18. Shopify E-Arşiv, E-Fatura ve Kargo Entegrasyonu - Eafatura.com, https://www.eafatura.com/entegrasyon/eticaret-entegrasyonlari
+19. Bizim Hesap Entegrasyonu - Entegrado.com, https://www.entegrado.com/blog/bizimhesap-e-ticaret-entegrasyonu
+20. Boomi + NetSuite Integration 2026: Enterprise iPaaS Setup - Broken Rubik, https://www.brokenrubik.com/services/integrations/boomi-netsuite
+21. Boomi iPaaS Explained: The Future of Enterprise Integration in 2026, https://metadesignsolutions.com/blog/boomi-ipaas-explained-the-future-of-enterprise-integration
+22. Boomi Atoms and Molecules | How They Work - VistaVu Solutions, https://www.vistavusolutions.com/product_information/boomi-atoms-and-molecules-how-they-work
+23. Inngest vs. Temporal: Which one should you choose? - Akka, https://akka.io/blog/inngest-vs-temporal
+24. Trigger.dev vs Temporal, https://trigger.dev/vs/temporal
+25. How it works - Trigger.dev, https://triggerdotdev-trigger-dev-32.mintlify.app/how-it-works
+26. How to Build Scalable API Integrations Using Boomi - MetaDesign Solutions, https://metadesignsolutions.com/blog/how-to-build-scalable-api-integrations-using-boomi
+27. FAQs | Extism - make all software programmable. Extend from within., https://extism.org/docs/questions/
+28. Extism - make all software programmable. Extend from within. | Extism - make all software programmable. Extend from within., https://extism.org/
+29. WASM plugins - moonrepo, https://moonrepo.dev/docs/guides/wasm-plugins
+30. Plug-in architectures with server-side WebAssembly - codecentric AG, https://www.codecentric.de/en/knowledge-hub/blog/plug-in-architectures-webassembly
+31. SCIM Provisioning Explained: The Definitive Guide for Enterprise SaaS (2026), https://supertokens.com/blog/scim-provisioning-explained
+32. ABAC with Open Policy Agent (OPA) - DEV Community, https://dev.to/mathew_pregasen_69c61185e/abac-with-open-policy-agent-opa-3f0
+33. spec/cloudevents/formats/cloudevents.json at main · cloudevents/spec - GitHub, https://github.com/cloudevents/spec/blob/main/cloudevents/formats/cloudevents.json
+34. NLgov profile for CloudEvents, https://logius-standaarden.github.io/NL-GOV-profile-for-CloudEvents/
+35. CloudEvents - JSON event format | Eventarc - Google Cloud Documentation, https://docs.cloud.google.com/eventarc/docs/cloudevents-json
+36. What is MCP in AI? | Model Context Protocol Explained - Snyk, https://snyk.io/articles/what-is-mcp-in-ai-everything-you-wanted-to-ask/
+37. Understanding MCP servers - Model Context Protocol, https://modelcontextprotocol.io/docs/learn/server-concepts
+38. Architecture overview - Model Context Protocol, https://modelcontextprotocol.io/docs/learn/architecture
+39. e-FATURA UYGULAMASI - (Entegrasyon Kılavuzu), https://www.turmob.org.tr/arsiv/mbs/resmigazete/-e-FaturaUygulamasiEntegrasyonKilavuzu-v1.9.pdf
+40. Türkiye e-Fatura 2026 | GİB Rehberi - Zunapro, https://www.zunapro.com/turkey/tr/blog/e-fatura-e-arsiv-eticaret-dijital-faturalama
+41. Kamu kurumlarına e-fatura düzenlenmesi - Vergi Teknolojileri, https://vergiteknolojileri.com.tr/kamu-kurumlarina-e-fatura-duzenlenmesi
+42. e-Fatura ERP Entegrasyonu Nasıl Yapılır? Checklist - Univera, https://univera.com.tr/e-fatura-erp-entegrasyonu-nasil-yapilir/
+43. Workato vs Boomi: Which iPaaS Fits Your 2026 Stack? | Logicity, https://logicity.in/en/blog/workato-vs-boomi-which-ipaas-fits-your-2026-stack
+44. Boomi AtomSphere | Specs, reviews and EoL info - InvGate, https://invgate.com/itdb/boomi-atomsphere
+45. Model Context Protocol (MCP) explained: A practical technical overview for developers and architects - CodiLime, https://codilime.com/blog/model-context-protocol-explained/
+46. OAuth 2.0 vs 2.1: What Changed and How to Migrate - Aembit, https://aembit.io/blog/oauth-2-1-guide-migration-security/
+47. draft-ietf-oauth-v2-1-15, https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-15
+48. 6 OAuth 2.1 Changes That Will Break (and Fix) Your B2B Authentication Stack | SSOJet, https://ssojet.com/blog/oauth-21-changes-b2b-authentication
+49. Open Policy Agent, https://openpolicyagent.org/
+50. 5 Open Policy Agent Examples and Use Cases - Oso Security, https://www.osohq.com/learn/open-policy-agent-examples-and-use-cases
+51. What is Open Policy Agent (OPA)? Best Practices + Applications - Wiz, https://www.wiz.io/academy/application-security/open-policy-agent-opa
+52. open-policy-agent/opa - GitHub, https://github.com/open-policy-agent/OPA
+53. Temporal vs Inngest vs Vercel Workflow 2026: Full Comparison | daily.dev, https://daily.dev/posts/temporal-vs-inngest-vs-vercel-workflow-2026-full-comparison-roihpr8h7
+54. Inngest vs Trigger.dev v3 vs Restate 2026 — PkgPulse Guides, https://www.pkgpulse.com/guides/inngest-vs-trigger-dev-v3-vs-restate-2026
+55. Inngest vs Temporal: Durable execution that developers love, https://www.inngest.com/compare-to-temporal
+56. Inngest Alternatives: Hookdeck Event Gateway, Trigger.dev, Temporal, and Restate Compared, https://hookdeck.com/webhooks/platforms/inngest-alternatives
+57. Queuebase vs Trigger.dev | Comparison, https://www.queuebase.com/compare/trigger-dev
+58. Model Context Protocol – Codex - OpenAI Developers, https://developers.openai.com/codex/mcp
+59. WooCommerce e-Fatura Entegrasyonunda Mart 2026 Güncellemeleri ve Yeni Özellikler, https://faturaentegrator.com/woocommerce-e-fatura-entegrasyonunda-mart-2026-guncellemeleri-ve-yeni-ozellikler/
+60. Paraşüt Entegrasyonu Nasıl Yapılır? - Sentos, https://www.sentos.com.tr/parasut-entegrasyonu-nasil-yapilir/
+61. Parasut API V4 Documentation - Paraşüt, https://apidocs.parasut.com/index
+62. Sipariş / Fatura Ekleme - BizimHesap, https://apidocs.bizimhesap.com/addinvoice
+63. WooCommerce Entegrasyonu Nasıl Yapılır - PraPazar, https://prapazar.com/tr/sss-detay/woocommerce
+64. SCIM Provisioning: What It Is and When You Need It | PropelAuth, https://www.propelauth.com/post/scim-provisioning-what-it-is-and-when-you-need-it
+65. SCIM: System for Cross-domain Identity Management, https://scim.cloud/
+66. SCIM Provisioning for SaaS: A Complete Implementation Guide | SSOJet - Enterprise SSO & Identity Solutions, https://ssojet.com/blog/scim-provisioning-saas
+67. Tutorial: Develop and plan provisioning for a SCIM endpoint in Microsoft Entra ID, https://learn.microsoft.com/en-us/entra/identity/app-provisioning/use-scim-to-provision-users-and-groups
+68. RBAC with API Gateway and Open Policy Agent (OPA) - API7.ai, https://api7.ai/blog/rbac-with-api-gateway-opa

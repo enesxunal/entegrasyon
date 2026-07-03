@@ -1,0 +1,300 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  passwordHash String @map("password_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  workspaceMembers WorkspaceMember[]
+  auditLogs        AuditLog[]
+
+  @@map("users")
+}
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  billingPlan String   @default("free") @map("billing_plan")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  members       WorkspaceMember[]
+  agents        Agent[]
+  manifests     Manifest[]
+  events        Event[]
+  workflows     Workflow[]
+  connections   Connection[]
+  secrets       Secret[]
+  executions    Execution[]
+  auditLogs     AuditLog[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String   @id @default(cuid())
+  workspaceId String   @map("workspace_id")
+  userId      String   @map("user_id")
+  role        String   @default("owner")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+  @@map("workspace_members")
+}
+
+model Agent {
+  id           String    @id @default(cuid())
+  workspaceId  String    @map("workspace_id")
+  name         String
+  type         String    @default("local_simulator")
+  status       String    @default("active")
+  secretHash   String    @map("secret_hash")
+  secretPrefix String    @map("secret_prefix")
+  publicKey    String?   @map("public_key")
+  lastSeenAt   DateTime? @map("last_seen_at")
+  version      String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  manifests   Manifest[]
+  events      Event[]
+  connections Connection[]
+  secrets     Secret[]
+  executions  Execution[]
+  usedNonces  UsedNonce[]
+
+  @@index([workspaceId])
+  @@map("agents")
+}
+
+model Provider {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  category  String
+  baseUrl   String   @map("base_url")
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  manifests   Manifest[]
+  connections Connection[]
+
+  @@map("providers")
+}
+
+model Manifest {
+  id              String   @id @default(cuid())
+  workspaceId     String?  @map("workspace_id")
+  providerId      String?  @map("provider_id")
+  agentId         String?  @map("agent_id")
+  protocolVersion String   @map("protocol_version")
+  version         String   @default("1.0.0")
+  status          String   @default("active")
+  manifestJson    Json     @map("manifest_json")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  workspace  Workspace?   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  provider   Provider?    @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  agent      Agent?       @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  capabilities Capability[]
+
+  @@index([workspaceId])
+  @@index([providerId])
+  @@index([agentId])
+  @@map("manifests")
+}
+
+model Capability {
+  id                  String   @id @default(cuid())
+  manifestId          String   @map("manifest_id")
+  name                String
+  category            String
+  riskLevel           String   @map("risk_level")
+  inputSchemaJson     Json     @map("input_schema_json")
+  outputSchemaJson    Json     @map("output_schema_json")
+  endpointJson        Json     @map("endpoint_json")
+  authRequirementJson Json?    @map("auth_requirement_json")
+  permissionsJson     Json?    @map("permissions_json")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  manifest Manifest @relation(fields: [manifestId], references: [id], onDelete: Cascade)
+
+  @@unique([manifestId, name])
+  @@index([manifestId])
+  @@map("capabilities")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  workspaceId String   @map("workspace_id")
+  agentId     String?  @map("agent_id")
+  name        String
+  schemaJson  Json     @map("schema_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  agent     Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+  @@index([agentId])
+  @@map("events")
+}
+
+model Workflow {
+  id               String   @id @default(cuid())
+  workspaceId      String   @map("workspace_id")
+  name             String
+  triggerEventName String   @map("trigger_event_name")
+  stepsJson        Json     @map("steps_json")
+  status           String   @default("draft")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  executions Execution[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, triggerEventName, status])
+  @@map("workflows")
+}
+
+model Connection {
+  id               String   @id @default(cuid())
+  workspaceId      String   @map("workspace_id")
+  providerId       String   @map("provider_id")
+  agentId          String?  @map("agent_id")
+  status           String   @default("active")
+  authType         String   @map("auth_type")
+  authMetadataJson Json     @map("auth_metadata_json")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  provider  Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  agent     Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  secrets   Secret[]
+
+  @@index([workspaceId])
+  @@index([providerId])
+  @@map("connections")
+}
+
+model Secret {
+  id              String   @id @default(cuid())
+  workspaceId     String   @map("workspace_id")
+  connectionId    String?  @map("connection_id")
+  agentId         String?  @map("agent_id")
+  keyName         String   @map("key_name")
+  encryptedValue  String   @map("encrypted_value")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  connection Connection? @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  agent      Agent?      @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([connectionId])
+  @@map("secrets")
+}
+
+model Execution {
+  id               String    @id @default(cuid())
+  workspaceId      String    @map("workspace_id")
+  workflowId       String    @map("workflow_id")
+  agentId          String?   @map("agent_id")
+  status           String    @default("pending")
+  startedAt        DateTime? @map("started_at")
+  finishedAt       DateTime? @map("finished_at")
+  durationMs       Int?      @map("duration_ms")
+  errorCode        String?   @map("error_code")
+  errorMessageSafe String?   @map("error_message_safe")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workflow  Workflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  agent     Agent?          @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  steps     ExecutionStep[]
+
+  @@index([workspaceId])
+  @@index([workflowId])
+  @@index([agentId])
+  @@map("executions")
+}
+
+model ExecutionStep {
+  id               String   @id @default(cuid())
+  executionId      String   @map("execution_id")
+  stepIndex        Int      @map("step_index")
+  stepId           String   @map("step_id")
+  stepName         String   @map("step_name")
+  capabilityName   String   @map("capability_name")
+  providerSlug     String?  @map("provider_slug")
+  status           String   @default("pending")
+  durationMs       Int?     @map("duration_ms")
+  httpStatus       Int?     @map("http_status")
+  errorCode        String?  @map("error_code")
+  errorMessageSafe String?  @map("error_message_safe")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  execution Execution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  @@index([executionId])
+  @@map("execution_steps")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  workspaceId String   @map("workspace_id")
+  actorId     String?  @map("actor_id")
+  action      String
+  resource    String?
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor     User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@map("audit_logs")
+}
+
+model UsedNonce {
+  id        String   @id @default(cuid())
+  agentId   String   @map("agent_id")
+  nonce     String
+  timestamp DateTime
+  createdAt DateTime @default(now()) @map("created_at")
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, nonce])
+  @@index([agentId])
+  @@index([createdAt])
+  @@map("used_nonces")
+}

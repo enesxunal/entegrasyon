@@ -1,0 +1,35 @@
+{
+  "$id": "media.image_optimize_request.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["image_url"],
+  "properties": {
+    "image_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "quality": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 80
+    },
+    "format": {
+      "type": "string",
+      "enum": ["original", "webp", "avif", "jpeg", "png"],
+      "default": "webp"
+    },
+    "max_width": {
+      "type": ["number", "null"],
+      "minimum": 1
+    },
+    "max_height": {
+      "type": ["number", "null"],
+      "minimum": 1
+    },
+    "strip_metadata": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

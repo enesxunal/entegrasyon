@@ -1,0 +1,43 @@
+{
+  "name": "Optimize uploaded image with Zippr.ink",
+  "trigger_event_name": "image.uploaded",
+  "steps": [
+    {
+      "id": "step_1",
+      "name": "Optimize image",
+      "service": "zippr_ink",
+      "capability": "image.optimize",
+      "input": {
+        "image_url": "{{trigger.data.image_url}}",
+        "quality": 80,
+        "format": "webp",
+        "max_width": 1600,
+        "strip_metadata": true
+      },
+      "retry": {
+        "max_attempts": 3,
+        "backoff": "exponential"
+      },
+      "idempotency_key": "{{trigger.event_id}}:image.optimize"
+    },
+    {
+      "id": "step_2",
+      "name": "Save optimized image result",
+      "service": "basic_site_agent",
+      "capability": "image.replace",
+      "input": {
+        "old_image_url": "{{trigger.data.image_url}}",
+        "new_image_url": "{{steps.step_1.output.optimized_url}}",
+        "job_id": "{{steps.step_1.output.job_id}}",
+        "metadata": {
+          "compression_ratio": "{{steps.step_1.output.compression_ratio}}",
+          "optimized_size_bytes": "{{steps.step_1.output.optimized_size_bytes}}"
+        }
+      },
+      "retry": {
+        "max_attempts": 1
+      },
+      "idempotency_key": "{{trigger.event_id}}:image.replace"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "$id": "media.image_replace_request.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["old_image_url", "new_image_url"],
+  "properties": {
+    "old_image_url": { "type": "string", "format": "uri" },
+    "new_image_url": { "type": "string", "format": "uri" },
+    "job_id": { "type": "string" },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}
