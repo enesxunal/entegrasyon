@@ -104,7 +104,11 @@ export async function handleAgentEvent(
     event
   );
   if (!validation.valid) {
-    return { ok: false as const, status: 400, error: "Invalid event schema" };
+    return {
+      ok: false as const,
+      status: 400,
+      error: `Invalid event schema: ${validation.errors.join("; ")}`,
+    };
   }
 
   const auth = await validateAgentEventRequest(
