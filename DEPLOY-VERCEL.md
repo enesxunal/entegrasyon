@@ -13,17 +13,30 @@ Repo: [github.com/enesxunal/entegrasyon](https://github.com/enesxunal/entegrasyo
 3. Framework: **Next.js** (auto-detected)
 4. Click **Deploy** (first deploy may fail until Supabase is linked — that's OK)
 
-## 3. Connect Supabase (automatic env vars)
+## 3. Connect Supabase (required — build fails without this)
 
-1. Vercel project → **Settings** → **Integrations**
-2. Add **Supabase** integration
-3. Select your **Entegrasyon** Supabase project
-4. Vercel automatically adds PostgreSQL env vars such as:
-   - `POSTGRES_PRISMA_URL`
-   - `POSTGRES_URL_NON_POOLING`
-   - `POSTGRES_URL`
+The build **needs** database connection env vars. Vercel does NOT add them until Supabase is linked.
 
-## 4. Env vars for Prisma (usually automatic)
+### Option A — Vercel Integrations (recommended)
+
+1. Open your Vercel project (not Supabase)
+2. **Settings** → **Integrations** (left menu)
+3. Search **Supabase** → **Add Integration**
+4. Authorize → select Supabase project **Entegrasyon**
+5. Enable sync for **Production** and **Preview**
+6. Confirm these appear under **Settings → Environment Variables**:
+   - `POSTGRES_URL` or `POSTGRES_PRISMA_URL`
+   - `POSTGRES_URL_NON_POOLING` (or `POSTGRES_HOST` + user/password)
+
+### Option B — Manual from Supabase Connect modal
+
+1. Supabase → **Database** → **Connect** (top right)
+2. Tab **ORM** → **Prisma**
+3. Copy connection strings into Vercel **Environment Variables**:
+   - `DATABASE_URL` = pooled / Transaction URL
+   - `DIRECT_URL` = direct URL (port 5432)
+
+## 4. Env vars for Prisma (usually automatic after step 3)
 
 If you connected **Supabase** in Vercel Integrations, these are added automatically:
 
