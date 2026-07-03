@@ -23,16 +23,16 @@ Repo: [github.com/enesxunal/entegrasyon](https://github.com/enesxunal/entegrasyo
    - `POSTGRES_URL_NON_POOLING`
    - `POSTGRES_URL`
 
-## 4. Map env vars for Prisma
+## 4. Env vars for Prisma (usually automatic)
 
-Prisma expects `DATABASE_URL` and `DIRECT_URL`. In Vercel → **Settings** → **Environment Variables**, add:
+If you connected **Supabase** in Vercel Integrations, these are added automatically:
 
-| Name | Value |
-|------|--------|
-| `DATABASE_URL` | Paste value from `POSTGRES_PRISMA_URL` (or use Vercel "reference" link) |
-| `DIRECT_URL` | Paste value from `POSTGRES_URL_NON_POOLING` |
+- `POSTGRES_PRISMA_URL`
+- `POSTGRES_URL_NON_POOLING`
 
-Also add:
+The build script maps them to `DATABASE_URL` and `DIRECT_URL` — **you do not need to copy connection strings manually.**
+
+Still add these manually in Vercel → **Environment Variables**:
 
 | Name | Value |
 |------|--------|
