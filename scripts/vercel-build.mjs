@@ -1,17 +1,17 @@
 import { execSync } from "node:child_process";
 
-function env(name: string, fallback?: string): string | undefined {
+function getEnv(name, fallback) {
   return process.env[name] || fallback;
 }
 
 if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL =
-    env("POSTGRES_PRISMA_URL") || env("POSTGRES_URL") || "";
+    getEnv("POSTGRES_PRISMA_URL") || getEnv("POSTGRES_URL") || "";
 }
 
 if (!process.env.DIRECT_URL) {
   process.env.DIRECT_URL =
-    env("POSTGRES_URL_NON_POOLING") || env("POSTGRES_URL") || "";
+    getEnv("POSTGRES_URL_NON_POOLING") || getEnv("POSTGRES_URL") || "";
 }
 
 if (!process.env.DATABASE_URL) {
@@ -28,9 +28,9 @@ if (!process.env.DIRECT_URL) {
 
 console.log("Using DATABASE_URL (pooled) and DIRECT_URL for Prisma migrate...");
 
-const run = (cmd: string) => {
+function run(cmd) {
   execSync(cmd, { stdio: "inherit", env: process.env });
-};
+}
 
 run("npx prisma generate");
 run("npx prisma migrate deploy");
