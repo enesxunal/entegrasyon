@@ -116,6 +116,12 @@ export default async function IntegratePage() {
 
       <div className="mt-6 flex gap-4">
         <Link
+          href="/dashboard/onboarding"
+          className="rounded-lg border px-4 py-2 text-sm font-medium"
+        >
+          AI ile manifest üret
+        </Link>
+        <Link
           href="/demo/customer-site"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white"
         >

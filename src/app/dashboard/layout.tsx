@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 const nav = [
   { href: "/dashboard", label: "Genel bakış" },
   { href: "/dashboard/integrate", label: "Entegrasyon" },
+  { href: "/dashboard/onboarding", label: "AI Kurulum" },
   { href: "/dashboard/agents", label: "Agent'lar" },
   { href: "/dashboard/providers", label: "Servis sağlayıcılar" },
   { href: "/dashboard/manifests", label: "Manifestler" },

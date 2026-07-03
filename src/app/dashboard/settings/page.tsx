@@ -32,6 +32,21 @@ export default function SettingsPage() {
           </Link>
         </div>
         <div className="rounded-xl border bg-white p-6">
+          <h2 className="font-semibold">AI Kurulum (Google Gemini)</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Durum: {process.env.GOOGLE_AI_API_KEY ? "yapılandırıldı ✓" : "anahtar eksik"}
+            {process.env.GOOGLE_AI_API_KEY && (
+              <> · Model: {process.env.GOOGLE_AI_MODEL ?? "gemini-2.0-flash"}</>
+            )}
+          </p>
+          <Link
+            href="/dashboard/onboarding"
+            className="mt-3 inline-block text-sm text-blue-600 hover:underline"
+          >
+            AI Kurulum sayfasına git →
+          </Link>
+        </div>
+        <div className="rounded-xl border bg-white p-6">
           <h2 className="font-semibold">Yakında</h2>
           <ul className="mt-2 list-inside list-disc text-sm text-slate-600">
             <li>Supabase Auth geçişi</li>
