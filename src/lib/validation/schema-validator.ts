@@ -29,13 +29,22 @@ export function validateAgainstSchema(
   schemaId: string,
   data: unknown
 ): { valid: true } | { valid: false; errors: string[] } {
-  const validate = getSchemaValidator(schemaId);
-  const valid = validate(data);
-  if (valid) return { valid: true };
-  const errors = (validate.errors ?? []).map(
-    (e) => `${e.instancePath || "/"} ${e.message ?? "invalid"}`
-  );
-  return { valid: false, errors };
+  try {
+    const validate = getSchemaValidator(schemaId);
+    const valid = validate(data);
+    if (valid) return { valid: true };
+    const errors = (validate.errors ?? []).map(
+      (e) => `${e.instancePath || "/"} ${e.message ?? "invalid"}`
+    );
+    return { valid: false, errors };
+  } catch (error) {
+    return {
+      valid: false,
+      errors: [
+        error instanceof Error ? error.message : "Schema validation failed",
+      ],
+    };
+  }
 }
 
 export function validateJsonSchema(

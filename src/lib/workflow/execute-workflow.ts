@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { decryptSecret } from "@/lib/crypto/secrets";
-import { optimizeImage } from "@/connectors/zippr-ink";
+import { optimizeImage, getZipprMode } from "@/connectors/zippr-ink";
 import { simulateImageReplace } from "@/lib/capabilities/basic-site-agent";
 import { validateAgainstSchema } from "@/lib/validation/schema-validator";
 import {
@@ -83,7 +83,9 @@ async function executeStep(
     }
 
     const config = await getZipprConnectionConfig(workspaceId);
-    if (!config) {
+    const zipprMode = getZipprMode();
+
+    if (!config && zipprMode !== "mock") {
       return {
         ok: false,
         errorCode: "connection_missing",
@@ -100,7 +102,7 @@ async function executeStep(
         max_height: resolvedInput.max_height as number | null | undefined,
         strip_metadata: resolvedInput.strip_metadata as boolean | undefined,
       },
-      config
+      config ?? { apiKey: "mock", baseUrl: "https://zippr.ink", mode: "test" }
     );
 
     if (!result.ok) {

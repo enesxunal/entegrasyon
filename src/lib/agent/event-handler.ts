@@ -18,7 +18,11 @@ async function getAgentSigningKey(agentId: string): Promise<string | null> {
     },
   });
   if (!secret) return null;
-  return decryptSecret(secret.encryptedValue);
+  try {
+    return decryptSecret(secret.encryptedValue);
+  } catch {
+    return null;
+  }
 }
 
 export async function validateAgentEventRequest(
