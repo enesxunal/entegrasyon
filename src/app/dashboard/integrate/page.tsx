@@ -30,52 +30,51 @@ export default async function IntegratePage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold">Integrate your website</h1>
+      <h1 className="mb-2 text-2xl font-bold">Sitenizi entegre edin</h1>
       <p className="mb-8 text-slate-600">
-        Connect your site to UIP in 3 steps. No code inside Zippr.ink required —
-        UIP calls Zippr API with your key.
+        3 adımda sitenizi UIP&apos;ye bağlayın. Zippr.ink içine kod kurmanıza gerek
+        yok — UIP, sizin API anahtarınızla Zippr&apos;ı çağırır.
       </p>
 
       <div className="mb-8 grid gap-4 md:grid-cols-3">
         <Step
           n={1}
-          title="Connect Zippr.ink"
+          title="Zippr.ink bağla"
           done={Boolean(zipprConnection)}
           href="/dashboard/providers/zippr-ink/connect"
-          label={zipprConnection ? "Connected ✓" : "Add API key"}
+          label={zipprConnection ? "Bağlandı ✓" : "API anahtarı ekle"}
         />
         <Step
           n={2}
-          title="Agent ready"
+          title="Agent hazır"
           done={Boolean(agent)}
           href="/dashboard/agents"
-          label={agent ? `Agent: ${agent.secretPrefix}...` : "Create agent"}
+          label={agent ? `Agent: ${agent.secretPrefix}...` : "Agent oluştur"}
         />
         <Step
           n={3}
-          title="Test on demo site"
+          title="Demo sitede dene"
           done={Boolean(workflow)}
           href="/demo/customer-site"
-          label="Open demo website"
+          label="Demo siteyi aç"
         />
       </div>
 
       <div className="mb-6 rounded-xl border bg-white p-6">
-        <h2 className="mb-4 font-semibold">Zippr.ink mode</h2>
+        <h2 className="mb-4 font-semibold">Zippr.ink modu</h2>
         <p className="text-sm text-slate-600">
-          Server mode: <strong>{zipprMode}</strong>
+          Sunucu modu: <strong>{zipprMode === "mock" ? "demo (sahte)" : "gerçek"}</strong>
           {zipprMode === "mock" && (
             <span>
               {" "}
-              — demo uses fake optimization. Set{" "}
-              <code className="text-xs">ZIPPR_MODE=real</code> on Vercel for live
-              Zippr API.
+              — demo sahte optimizasyon kullanır. Gerçek Zippr için Vercel&apos;de{" "}
+              <code className="text-xs">ZIPPR_MODE=real</code> ayarlayın.
             </span>
           )}
           {zipprMode === "real" && !zipprConnection && (
             <span className="text-amber-700">
               {" "}
-              — real mode active but no API key in this workspace yet.
+              — gerçek mod açık ama bu çalışma alanında henüz API anahtarı yok.
             </span>
           )}
         </p>
@@ -83,9 +82,10 @@ export default async function IntegratePage() {
 
       {agent && (
         <div className="mb-6 rounded-xl border bg-white p-6">
-          <h2 className="mb-2 font-semibold">Your agent credentials</h2>
+          <h2 className="mb-2 font-semibold">Agent bilgileriniz</h2>
           <p className="mb-4 text-sm text-slate-600">
-            Install on your server. Never put the secret in browser JavaScript.
+            Bunları sunucunuza kurun. Gizli anahtarı asla tarayıcı JavaScript&apos;ine
+            koymayın.
           </p>
           <dl className="space-y-2 text-sm">
             <div>
@@ -93,7 +93,7 @@ export default async function IntegratePage() {
               <dd className="font-mono">{agent.id}</dd>
             </div>
             <div>
-              <dt className="text-slate-500">Event endpoint</dt>
+              <dt className="text-slate-500">Olay adresi (endpoint)</dt>
               <dd className="font-mono break-all">{appUrl}/api/agent/events</dd>
             </div>
           </dl>
@@ -101,18 +101,16 @@ export default async function IntegratePage() {
       )}
 
       <div className="rounded-xl border bg-slate-900 p-6 text-slate-100">
-        <h2 className="mb-2 font-semibold">Server-side example (Node.js)</h2>
+        <h2 className="mb-2 font-semibold">Sunucu tarafı örneği</h2>
         <p className="mb-4 text-sm text-slate-400">
-          When a user uploads an image on your site, your server sends a signed
-          event:
+          Sitenize biri görsel yüklediğinde sunucunuz imzalı bir olay gönderir:
         </p>
         <pre className="overflow-auto rounded bg-slate-800 p-4 text-xs">
-{`npm run agent:test -- --image-url="https://yoursite.com/image.jpg"
+{`npm run agent:test -- --image-url="https://siteniz.com/gorsel.jpg"
 
-# Or use the UIP SDK pattern:
 # POST ${appUrl}/api/agent/events
-# Headers: X-Agent-Id, X-Timestamp, X-Nonce, X-Signature
-# Body: { "event_type": "image.uploaded", ... }`}
+# Başlıklar: X-Agent-Id, X-Timestamp, X-Nonce, X-Signature
+# Gövde: { "event_type": "image.uploaded", ... }`}
         </pre>
       </div>
 
@@ -121,13 +119,19 @@ export default async function IntegratePage() {
           href="/demo/customer-site"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white"
         >
-          Test on demo website
+          Demo sitede test et
         </Link>
         <Link
           href="/docs/zippr-integration"
           className="rounded-lg border px-4 py-2 text-sm font-medium"
         >
-          Zippr + UIP docs
+          Zippr + UIP dokümantasyonu
+        </Link>
+        <Link
+          href="/docs/guvenlik"
+          className="rounded-lg border px-4 py-2 text-sm font-medium"
+        >
+          Güvenlik modeli
         </Link>
       </div>
     </div>

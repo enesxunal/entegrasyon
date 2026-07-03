@@ -15,10 +15,10 @@ export default async function ProvidersPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold">Providers</h1>
+      <h1 className="mb-2 text-2xl font-bold">Servis sağlayıcılar</h1>
       <p className="mb-8 text-slate-600">
-        Providers expose capabilities such as image.optimize, invoice.create,
-        shipment.create, or sms.send.
+        Servis sağlayıcılar image.optimize, invoice.create, shipment.create gibi
+        yetenekler sunar.
       </p>
 
       <div className="space-y-4">
@@ -38,25 +38,25 @@ export default async function ProvidersPage() {
                     href="/dashboard/providers/zippr-ink/connect"
                     className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white"
                   >
-                    Connect
+                    Bağlan
                   </Link>
                 )}
               </div>
               {manifest && (
                 <div>
-                  <p className="mb-2 text-sm font-medium">Capabilities</p>
+                  <p className="mb-2 text-sm font-medium">Yetenekler</p>
                   <div className="flex flex-wrap gap-2">
                     {manifest.capabilities.map((cap) => (
                       <span
                         key={cap.id}
-                        className="rounded-full bg-slate-100 px-3 py-1 text-xs font-mono"
+                        className="rounded-full bg-slate-100 px-3 py-1 font-mono text-xs"
                       >
                         {cap.name}
                       </span>
                     ))}
                   </div>
                   <p className="mt-3 text-xs text-slate-500">
-                    Auth: api_key (bearer)
+                    Kimlik doğrulama: api_key (bearer)
                   </p>
                 </div>
               )}

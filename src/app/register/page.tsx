@@ -10,16 +10,16 @@ export default async function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-md rounded-xl border bg-white p-8 shadow-sm">
-        <h1 className="mb-2 text-2xl font-bold">Register your site on UIP</h1>
+        <h1 className="mb-2 text-2xl font-bold">Sitenizi UIP&apos;ye kaydedin</h1>
         <p className="mb-6 text-sm text-slate-600">
-          Create a workspace, get an agent, and connect Zippr.ink image optimization
-          to your website.
+          Çalışma alanı oluşturun, agent alın ve Zippr.ink görsel optimizasyonunu
+          sitenize bağlayın.
         </p>
         <RegisterForm />
         <p className="mt-6 text-center text-sm text-slate-500">
-          Already have an account?{" "}
+          Zaten hesabınız var mı?{" "}
           <Link href="/login" className="text-blue-600 hover:underline">
-            Sign in
+            Giriş yap
           </Link>
         </p>
       </div>

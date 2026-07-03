@@ -23,7 +23,7 @@ export function LoginForm() {
 
     if (!res.ok) {
       const data = await res.json();
-      setError(data.error ?? "Login failed");
+      setError(data.error ?? "Giriş başarısız");
       setLoading(false);
       return;
     }
@@ -35,7 +35,7 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="mb-1 block text-sm font-medium">Email</label>
+        <label className="mb-1 block text-sm font-medium">E-posta</label>
         <input
           type="email"
           value={email}
@@ -45,7 +45,7 @@ export function LoginForm() {
         />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium">Password</label>
+        <label className="mb-1 block text-sm font-medium">Şifre</label>
         <input
           type="password"
           value={password}
@@ -60,7 +60,7 @@ export function LoginForm() {
         disabled={loading}
         className="w-full rounded-lg bg-slate-900 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
       >
-        {loading ? "Signing in..." : "Sign in"}
+        {loading ? "Giriş yapılıyor..." : "Giriş yap"}
       </button>
     </form>
   );

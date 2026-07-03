@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { formatDate } from "@/lib/utils";
+import { statusLabel } from "@/lib/i18n/tr";
 
 type Agent = {
   id: string;
@@ -15,7 +16,7 @@ type Agent = {
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [name, setName] = useState("Local Simulator");
+  const [name, setName] = useState("Yerel Simülatör");
   const [newSecret, setNewSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +40,7 @@ export default function AgentsPage() {
     });
     const data = await res.json();
     if (data.secret) setNewSecret(data.secret);
-    setName("Local Simulator");
+    setName("Yerel Simülatör");
     await loadAgents();
     setLoading(false);
   }
@@ -55,16 +56,16 @@ export default function AgentsPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold">Agents</h1>
+      <h1 className="mb-2 text-2xl font-bold">Agent&apos;lar</h1>
       <p className="mb-8 text-slate-600">
-        Agents run in customer environments and execute workflows without
-        sending full payloads to the control plane.
+        Agent&apos;lar müşteri ortamında çalışır. İş akışlarını tam veri göndermeden
+        yürütür — sadece köprü kurar.
       </p>
 
       {newSecret && (
         <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4">
           <p className="mb-2 font-medium text-amber-900">
-            Agent secret (shown once — copy now)
+            Agent gizli anahtarı (bir kez gösterilir — şimdi kopyalayın)
           </p>
           <code className="block break-all rounded bg-white p-3 text-sm">
             {newSecret}
@@ -73,7 +74,7 @@ export default function AgentsPage() {
             onClick={() => setNewSecret(null)}
             className="mt-3 text-sm text-amber-800 underline"
           >
-            Dismiss
+            Kapat
           </button>
         </div>
       )}
@@ -83,37 +84,37 @@ export default function AgentsPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="rounded-lg border px-3 py-2 text-sm"
-          placeholder="Agent name"
+          placeholder="Agent adı"
         />
         <button
           type="submit"
           disabled={loading}
           className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
         >
-          Create Agent
+          Agent oluştur
         </button>
       </form>
 
-      <div className="rounded-xl border bg-white divide-y">
+      <div className="divide-y rounded-xl border bg-white">
         {agents.map((agent) => (
           <div key={agent.id} className="flex items-center justify-between p-5">
             <div>
               <p className="font-medium">{agent.name}</p>
               <p className="text-sm text-slate-500">
-                {agent.type} · {agent.secretPrefix}... · Last seen:{" "}
+                {agent.type} · {agent.secretPrefix}... · Son görülme:{" "}
                 {formatDate(agent.lastSeenAt)}
               </p>
               <p className="text-xs text-slate-400">ID: {agent.id}</p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs capitalize">
-                {agent.status}
+              <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs">
+                {statusLabel(agent.status)}
               </span>
               <button
                 onClick={() => rotateSecret(agent.id)}
                 className="text-sm text-blue-600 hover:underline"
               >
-                Rotate secret
+                Anahtarı yenile
               </button>
             </div>
           </div>

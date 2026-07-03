@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "UIP — Universal Integration Platform",
+  title: "UIP — Evrensel Entegrasyon Platformu",
   description:
-    "Connect SaaS services to websites without storing customer data.",
+    "SaaS servislerini web sitelerine bağlayın — müşteri verilerini saklamadan.",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="tr">
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );

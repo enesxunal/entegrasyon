@@ -16,7 +16,7 @@ export function LogoutButton() {
       onClick={handleLogout}
       className="mt-2 text-xs text-slate-500 hover:text-slate-800"
     >
-      Sign out
+      Çıkış yap
     </button>
   );
 }

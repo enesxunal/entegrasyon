@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { statusLabel } from "@/lib/i18n/tr";
 
 type Workflow = {
   id: string;
@@ -46,12 +47,12 @@ export default function WorkflowsPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: "Optimize uploaded image with Zippr.ink",
+        name: "Zippr.ink ile yüklenen görseli optimize et",
         trigger_event_name: "image.uploaded",
         steps: [
           {
             id: "step_1",
-            name: "Optimize image",
+            name: "Görseli optimize et",
             service: "zippr_ink",
             capability: "image.optimize",
             input: {
@@ -66,7 +67,7 @@ export default function WorkflowsPage() {
           },
           {
             id: "step_2",
-            name: "Save optimized image result",
+            name: "Optimize görseli kaydet",
             service: "basic_site_agent",
             capability: "image.replace",
             input: {
@@ -93,58 +94,58 @@ export default function WorkflowsPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="mb-2 text-2xl font-bold">Workflows</h1>
+          <h1 className="mb-2 text-2xl font-bold">İş akışları</h1>
           <p className="text-slate-600">
-            Connect events to provider capabilities using deterministic steps.
+            Olayları servis yeteneklerine deterministik adımlarla bağlar.
           </p>
         </div>
         <button
           onClick={createFromTemplate}
           className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
         >
-          Create from template
+          Şablondan oluştur
         </button>
       </div>
 
-      <div className="rounded-xl border bg-white divide-y">
+      <div className="divide-y rounded-xl border bg-white">
         {workflows.map((wf) => (
           <div key={wf.id} className="flex items-center justify-between p-5">
             <div>
               <p className="font-medium">{wf.name}</p>
               <p className="text-sm text-slate-500">
-                Trigger: {wf.triggerEventName}
+                Tetikleyici: {wf.triggerEventName}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="rounded-full bg-slate-100 px-2 py-1 text-xs capitalize">
-                {wf.status}
+              <span className="rounded-full bg-slate-100 px-2 py-1 text-xs">
+                {statusLabel(wf.status)}
               </span>
               {wf.status !== "active" ? (
                 <button
                   onClick={() => toggleWorkflow(wf.id, "enable")}
                   className="text-sm text-blue-600"
                 >
-                  Enable
+                  Etkinleştir
                 </button>
               ) : (
                 <button
                   onClick={() => toggleWorkflow(wf.id, "disable")}
                   className="text-sm text-slate-500"
                 >
-                  Disable
+                  Devre dışı bırak
                 </button>
               )}
               <button
                 onClick={() => testWorkflow(wf.id)}
                 className="text-sm text-blue-600"
               >
-                Test
+                Test et
               </button>
               <Link
                 href={`/dashboard/executions?workflow=${wf.id}`}
                 className="text-sm text-slate-500"
               >
-                Logs
+                Loglar
               </Link>
             </div>
           </div>

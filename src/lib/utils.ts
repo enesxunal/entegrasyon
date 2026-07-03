@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDate(date: Date | string | null | undefined) {
   if (!date) return "—";
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("tr-TR", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(date));

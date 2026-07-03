@@ -22,10 +22,10 @@ export default async function ManifestsPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold">Manifests</h1>
+      <h1 className="mb-2 text-2xl font-bold">Manifestler</h1>
       <p className="mb-8 text-slate-600">
-        Service manifests describe provider and agent capabilities, schemas, and
-        endpoints.
+        Manifestler servis ve agent yeteneklerini, şemaları ve uç noktaları tanımlar.
+        Veri değil — yapı tanımıdır.
       </p>
 
       <div className="space-y-6">
@@ -45,7 +45,7 @@ export default async function ManifestsPage() {
                 </p>
               </div>
               <p className="mb-2 text-sm font-medium">
-                Capabilities ({manifest.capabilities.length})
+                Yetenekler ({manifest.capabilities.length})
               </p>
               <pre className="max-h-96 overflow-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100">
                 {JSON.stringify(manifest.manifestJson, null, 2)}

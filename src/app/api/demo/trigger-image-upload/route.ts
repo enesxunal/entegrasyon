@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return apiError("Invalid image URL");
+    return apiError("Geçersiz görsel adresi");
   }
 
   let agentId = parsed.data.agent_id;
@@ -27,10 +27,10 @@ export async function POST(request: NextRequest) {
     const agent = await prisma.agent.findFirst({
       where: { id: agentId, workspaceId: session.workspaceId },
     });
-    if (!agent) return apiError("Agent not found", 404);
+    if (!agent) return apiError("Agent bulunamadı", 404);
   } else {
     const agent = await getDefaultWebsiteAgent(session.workspaceId);
-    if (!agent) return apiError("No active agent in workspace", 404);
+    if (!agent) return apiError("Bu çalışma alanında aktif agent yok", 404);
     agentId = agent.id;
   }
 
@@ -61,9 +61,9 @@ export async function POST(request: NextRequest) {
     zippr_connected: Boolean(zipprConnected),
     message:
       zipprMode === "real" && zipprConnected
-        ? "Image sent to Zippr.ink for real optimization."
+        ? "Görsel gerçek Zippr.ink optimizasyonuna gönderildi."
         : zipprMode === "real" && !zipprConnected
-          ? "ZIPPR_MODE=real but no API key connected — check Providers."
-          : "Image processed in mock mode (demo). Connect Zippr for real optimization.",
+          ? "ZIPPR_MODE=real ama API anahtarı bağlı değil — Servis sağlayıcılar bölümünü kontrol edin."
+          : "Görsel demo (sahte) modda işlendi. Gerçek optimizasyon için Zippr bağlayın.",
   });
 }

@@ -5,75 +5,74 @@ export default function ProtocolDocsPage() {
     <div className="min-h-screen bg-white">
       <header className="border-b px-6 py-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <h1 className="font-bold">UIP Protocol</h1>
+          <h1 className="font-bold">UIP Protokolü</h1>
           <Link href="/" className="text-sm text-blue-600">
-            Home
+            Ana sayfa
           </Link>
         </div>
       </header>
       <article className="prose prose-slate mx-auto max-w-3xl px-6 py-10">
-        <h1>Universal Integration Protocol</h1>
+        <h1>Evrensel Entegrasyon Protokolü</h1>
         <p>
-          UIP connects SaaS providers and customer agents using manifests,
-          capabilities, events, and workflows — without storing sensitive
-          business payloads in the control plane.
+          UIP, SaaS servislerini ve müşteri agent&apos;larını manifest, yetenek,
+          olay ve iş akışları ile birbirine bağlar — hassas iş verilerini kontrol
+          panelinde saklamadan.
         </p>
 
-        <h2>What is a provider?</h2>
+        <h2>Servis sağlayıcı nedir?</h2>
         <p>
-          A provider is an external SaaS service (e.g. Zippr.ink) that publishes
-          capabilities like <code>image.optimize</code> through a manifest.
+          Dış bir SaaS servisi (ör. Zippr.ink). Manifest aracılığıyla{" "}
+          <code>image.optimize</code> gibi yetenekler sunar.
         </p>
 
-        <h2>What is an agent?</h2>
+        <h2>Agent nedir?</h2>
         <p>
-          An agent runs on the customer side (website, app, or simulator). It
-          emits events and executes local capabilities. For MVP we use{" "}
-          <code>local_simulator</code>.
+          Müşteri tarafında çalışan küçük program (web sitesi, uygulama veya
+          simülatör). Olay gönderir ve yerel yetenekleri yürütür.
         </p>
 
-        <h2>What is a manifest?</h2>
+        <h2>Manifest nedir?</h2>
         <p>
-          A versioned JSON document describing service identity, auth, capabilities,
-          events, schemas, and endpoints.
+          Servis kimliği, kimlik doğrulama, yetenekler, olaylar, şemalar ve uç
+          noktaları tanımlayan sürümlü JSON belgesi. Veri değil — yapı tanımıdır.
         </p>
 
-        <h2>What is a capability?</h2>
+        <h2>Yetenek (capability) nedir?</h2>
         <p>
-          A normalized action such as <code>image.optimize</code> or{" "}
-          <code>image.replace</code> with input/output JSON schemas.
+          <code>image.optimize</code> veya <code>image.replace</code> gibi normalize
+          edilmiş bir eylem; giriş/çıkış JSON şemaları ile.
         </p>
 
-        <h2>What is an event?</h2>
+        <h2>Olay (event) nedir?</h2>
         <p>
-          A trigger such as <code>image.uploaded</code> that starts matching
-          workflows.
+          <code>image.uploaded</code> gibi bir tetikleyici; eşleşen iş akışlarını
+          başlatır.
         </p>
 
-        <h2>What is a workflow?</h2>
+        <h2>İş akışı nedir?</h2>
         <p>
-          A deterministic sequence of steps connecting an event to provider and
-          agent capabilities.
+          Bir olayı servis ve agent yeteneklerine bağlayan deterministik adım
+          dizisi.
         </p>
 
-        <h2>What data is stored?</h2>
+        <h2>Ne saklanır?</h2>
         <ul>
-          <li>Manifests, workflows, policies (metadata)</li>
-          <li>Execution status, duration, step names</li>
-          <li>Safe error codes and messages</li>
-          <li>Encrypted API keys and agent signing keys</li>
+          <li>Manifestler, iş akışları, politikalar (metadata)</li>
+          <li>Çalıştırma durumu, süre, adım adları</li>
+          <li>Güvenli hata kodları ve mesajları</li>
+          <li>Şifreli API anahtarları ve agent imza anahtarları</li>
         </ul>
 
-        <h2>What data is NOT stored?</h2>
+        <h2>Ne saklanmaz?</h2>
         <ul>
-          <li>Full event payloads</li>
-          <li>Image binary data</li>
-          <li>Customer PII, orders, invoices, payments</li>
-          <li>Raw secrets in logs</li>
+          <li>Tam olay verileri</li>
+          <li>Görsel dosyaları</li>
+          <li>Müşteri kişisel bilgileri, siparişler, faturalar</li>
+          <li>Loglarda ham gizli anahtarlar</li>
         </ul>
 
-        <h2>Agent request signing</h2>
-        <p>Every agent request must include:</p>
+        <h2>Agent istek imzalama</h2>
+        <p>Her agent isteği şunları içermelidir:</p>
         <pre>
           {`X-Agent-Id
 X-Timestamp
@@ -82,24 +81,28 @@ X-Signature
 
 HMAC_SHA256(agent_secret, timestamp + "." + nonce + "." + raw_body)`}
         </pre>
-        <p>Timestamp max age: 5 minutes. Nonces must be unique.</p>
+        <p>Zaman damgası en fazla 5 dakika geçerli. Nonce tekrar kullanılamaz.</p>
 
-        <h2>Zippr.ink demo flow</h2>
+        <h2>Zippr.ink demo akışı</h2>
         <pre>
           {`image.uploaded → image.optimize → image.replace`}
         </pre>
         <ol>
-          <li>Local agent sends signed <code>image.uploaded</code> event</li>
-          <li>UIP finds active workflow</li>
-          <li>Zippr.ink <code>/api/v1/images/optimize-url</code> is called</li>
-          <li>Result is normalized to <code>media.image_optimize_result.v1</code></li>
-          <li><code>image.replace</code> is simulated locally</li>
-          <li>Metadata-only execution log is stored</li>
+          <li>Agent imzalı <code>image.uploaded</code> olayı gönderir</li>
+          <li>UIP aktif iş akışını bulur</li>
+          <li>Zippr.ink <code>/api/v1/images/optimize-url</code> çağrılır</li>
+          <li>Sonuç <code>media.image_optimize_result.v1</code> formatına normalize edilir</li>
+          <li><code>image.replace</code> yerelde yürütülür</li>
+          <li>Yalnızca özet çalıştırma logu saklanır</li>
         </ol>
 
         <p>
-          Set <code>ZIPPR_MODE=mock</code> for development without a real API key,
-          or <code>ZIPPR_MODE=real</code> for live Zippr.ink calls.
+          Geliştirme için <code>ZIPPR_MODE=mock</code>, canlı Zippr için{" "}
+          <code>ZIPPR_MODE=real</code> ayarlayın.
+        </p>
+
+        <p>
+          <Link href="/docs/guvenlik">Güvenlik modeli →</Link>
         </p>
       </article>
     </div>

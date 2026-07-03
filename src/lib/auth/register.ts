@@ -25,7 +25,7 @@ export async function registerWorkspace(input: {
     where: { email: input.email },
   });
   if (existing) {
-    return { ok: false as const, error: "Email already registered" };
+    return { ok: false as const, error: "Bu e-posta zaten kayıtlı" };
   }
 
   const passwordHash = await bcrypt.hash(input.password, 12);

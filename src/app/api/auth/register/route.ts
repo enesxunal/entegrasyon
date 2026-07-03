@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return apiError("Invalid registration data");
+    return apiError("Geçersiz kayıt bilgileri");
   }
 
   const result = await registerWorkspace({
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       agent: result.agent,
       agent_secret: result.agentSecret,
       message:
-        "Registration complete. Save your agent secret — it is shown only once.",
+        "Kayıt tamamlandı. Agent gizli anahtarınızı kaydedin — yalnızca bir kez gösterilir.",
     },
     201
   );

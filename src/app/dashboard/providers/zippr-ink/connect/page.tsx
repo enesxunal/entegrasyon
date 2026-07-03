@@ -30,9 +30,9 @@ export default function ZipprConnectPage() {
 
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Failed to save connection");
+      setMessage(data.error ?? "Bağlantı kaydedilemedi");
     } else {
-      setMessage(`Connected (${data.connection.api_key_masked})`);
+      setMessage(`Bağlandı (${data.connection.api_key_masked})`);
       setConnected(true);
       setApiKey("");
     }
@@ -45,23 +45,23 @@ export default function ZipprConnectPage() {
         onClick={() => router.back()}
         className="mb-4 text-sm text-slate-500 hover:text-slate-800"
       >
-        ← Back to Providers
+        ← Servis sağlayıcılara dön
       </button>
-      <h1 className="mb-2 text-2xl font-bold">Connect Zippr.ink</h1>
+      <h1 className="mb-2 text-2xl font-bold">Zippr.ink bağla</h1>
       <p className="mb-8 text-slate-600">
-        Add your Zippr API key. The key is encrypted and never shown again after
-        save.
+        Zippr API anahtarınızı ekleyin. Anahtar şifrelenir ve kayıttan sonra bir daha
+        gösterilmez.
       </p>
 
       {connected && (
         <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-          Zippr.ink connection is configured for this workspace.
+          Zippr.ink bağlantısı bu çalışma alanı için yapılandırıldı.
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="max-w-md space-y-4 rounded-xl border bg-white p-6">
         <div>
-          <label className="mb-1 block text-sm font-medium">API Key</label>
+          <label className="mb-1 block text-sm font-medium">API Anahtarı</label>
           <input
             type="password"
             value={apiKey}
@@ -71,18 +71,18 @@ export default function ZipprConnectPage() {
             required
           />
           <p className="mt-1 text-xs text-slate-500">
-            Format: zippr_live_... or zippr_test_...
+            Format: zippr_live_... veya zippr_test_...
           </p>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Mode</label>
+          <label className="mb-1 block text-sm font-medium">Mod</label>
           <select
             value={mode}
             onChange={(e) => setMode(e.target.value as "test" | "live")}
             className="w-full rounded-lg border px-3 py-2 text-sm"
           >
             <option value="test">Test</option>
-            <option value="live">Live</option>
+            <option value="live">Canlı</option>
           </select>
         </div>
         {message && <p className="text-sm text-slate-600">{message}</p>}
@@ -91,7 +91,7 @@ export default function ZipprConnectPage() {
           disabled={loading}
           className="w-full rounded-lg bg-blue-600 py-2 text-sm font-medium text-white"
         >
-          {loading ? "Saving..." : "Save Connection"}
+          {loading ? "Kaydediliyor..." : "Bağlantıyı kaydet"}
         </button>
       </form>
     </div>

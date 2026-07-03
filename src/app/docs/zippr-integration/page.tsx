@@ -5,97 +5,79 @@ export default function ZipprIntegrationDocsPage() {
     <div className="min-h-screen bg-white">
       <header className="border-b px-6 py-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <h1 className="font-bold">Zippr.ink + UIP Integration</h1>
+          <h1 className="font-bold">Zippr.ink + UIP Entegrasyonu</h1>
           <Link href="/" className="text-sm text-blue-600">
-            Home
+            Ana sayfa
           </Link>
         </div>
       </header>
       <article className="prose prose-slate mx-auto max-w-3xl px-6 py-10">
-        <h1>Zippr.ink as UIP Provider</h1>
+        <h1>Zippr.ink UIP servis sağlayıcısı olarak</h1>
         <p>
-          Zippr.ink does <strong>not</strong> need UIP code installed inside it.
-          UIP calls Zippr&apos;s existing REST API — like any external client.
+          Zippr.ink içine UIP kodu kurmanıza gerek yok. UIP, Zippr&apos;ın mevcut
+          REST API&apos;sini herhangi bir dış istemci gibi çağırır.
         </p>
 
-        <h2>Architecture</h2>
+        <h2>Mimari</h2>
         <pre>
-          {`Customer Website
-    → UIP Agent (signed event: image.uploaded)
-    → UIP Control Plane (workflow)
+          {`Müşteri Web Sitesi
+    → UIP Agent (imzalı olay: image.uploaded)
+    → UIP Kontrol Paneli (iş akışı)
     → Zippr.ink API (POST /api/v1/images/optimize-url)
-    → Result back to agent / metadata logged in UIP`}
+    → Sonuç agent'a / özet log UIP'de`}
         </pre>
 
-        <h2>What Zippr.ink provides</h2>
+        <h2>Zippr.ink ne sağlar?</h2>
         <ul>
           <li>REST API: optimize-url, optimize, jobs</li>
-          <li>API keys: zippr_test_... / zippr_live_...</li>
+          <li>API anahtarları: zippr_test_... / zippr_live_...</li>
           <li>OpenAPI: /openapi.json</li>
         </ul>
 
-        <h2>What UIP provides</h2>
+        <h2>UIP ne sağlar?</h2>
         <ul>
-          <li>Provider manifest (image.optimize capability)</li>
-          <li>Customer workspace + agent registration</li>
-          <li>Workflow: image.uploaded → optimize → replace</li>
-          <li>Encrypted storage of customer Zippr API keys</li>
-          <li>Metadata-only execution logs (no image payload storage)</li>
+          <li>Servis manifesti (image.optimize yeteneği)</li>
+          <li>Müşteri çalışma alanı + agent kaydı</li>
+          <li>İş akışı: image.uploaded → optimize → replace</li>
+          <li>Şifreli Zippr API anahtarı saklama</li>
+          <li>Yalnızca özet çalıştırma logları</li>
         </ul>
 
-        <h2>Customer onboarding flow</h2>
+        <h2>Müşteri kayıt akışı</h2>
         <ol>
-          <li>Register at UIP (/register)</li>
-          <li>Connect Zippr API key (Dashboard → Providers → Zippr.ink)</li>
-          <li>Install agent on their server (or use demo site to test)</li>
-          <li>Upload image → workflow runs → Zippr optimizes</li>
+          <li>UIP&apos;ye kayıt ol (/register)</li>
+          <li>Zippr API anahtarını bağla (Panel → Servis sağlayıcılar → Zippr.ink)</li>
+          <li>Agent&apos;ı sunucuya kur (veya demo site ile test et)</li>
+          <li>Görsel yükle → iş akışı çalışır → Zippr optimize eder</li>
         </ol>
 
-        <h2>Real vs mock mode</h2>
+        <h2>Demo vs gerçek mod</h2>
         <table>
           <thead>
             <tr>
               <th>ZIPPR_MODE</th>
-              <th>Behavior</th>
+              <th>Davranış</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>mock</td>
-              <td>Fake optimization response (no Zippr API call)</td>
+              <td>Sahte optimizasyon yanıtı (Zippr API çağrılmaz)</td>
             </tr>
             <tr>
               <td>real</td>
-              <td>Calls live Zippr.ink API with workspace API key</td>
+              <td>Çalışma alanı API anahtarı ile canlı Zippr.ink çağrısı</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Future: Zippr-side enhancements</h2>
+        <h2>Gelecek: Zippr tarafı geliştirmeler</h2>
         <ul>
-          <li>Zippr dashboard: &quot;Connect to UIP&quot; button</li>
-          <li>OAuth instead of API key paste</li>
-          <li>Webhook: job.completed → notify customer agent</li>
-          <li>UIP listed as official Zippr integration partner</li>
+          <li>Zippr panelinde &quot;UIP&apos;ye bağlan&quot; butonu</li>
+          <li>API anahtarı yapıştırma yerine OAuth</li>
+          <li>Webhook: job.completed → müşteri agent&apos;ına bildirim</li>
+          <li>UIP resmi Zippr entegrasyon ortağı olarak listelenir</li>
         </ul>
-
-        <h2>API reference</h2>
-        <p>
-          Zippr optimize URL endpoint used by UIP connector:
-        </p>
-        <pre>
-          {`POST https://zippr.ink/api/v1/images/optimize-url
-Authorization: Bearer zippr_live_...
-Content-Type: application/json
-
-{
-  "image_url": "https://example.com/photo.jpg",
-  "quality": 80,
-  "format": "webp",
-  "max_width": 1600,
-  "strip_metadata": true
-}`}
-        </pre>
       </article>
     </div>
   );

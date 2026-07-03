@@ -6,14 +6,14 @@ import { LogoutButton } from "@/components/auth/logout-button";
 export const dynamic = "force-dynamic";
 
 const nav = [
-  { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/integrate", label: "Integrate" },
-  { href: "/dashboard/agents", label: "Agents" },
-  { href: "/dashboard/providers", label: "Providers" },
-  { href: "/dashboard/manifests", label: "Manifests" },
-  { href: "/dashboard/workflows", label: "Workflows" },
-  { href: "/dashboard/executions", label: "Executions" },
-  { href: "/dashboard/settings", label: "Settings" },
+  { href: "/dashboard", label: "Genel bakış" },
+  { href: "/dashboard/integrate", label: "Entegrasyon" },
+  { href: "/dashboard/agents", label: "Agent'lar" },
+  { href: "/dashboard/providers", label: "Servis sağlayıcılar" },
+  { href: "/dashboard/manifests", label: "Manifestler" },
+  { href: "/dashboard/workflows", label: "İş akışları" },
+  { href: "/dashboard/executions", label: "Çalıştırmalar" },
+  { href: "/dashboard/settings", label: "Ayarlar" },
 ];
 
 export default async function DashboardLayout({
@@ -31,7 +31,7 @@ export default async function DashboardLayout({
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
             UIP
           </p>
-          <h1 className="text-lg font-bold">Control Plane</h1>
+          <h1 className="text-lg font-bold">Kontrol Paneli</h1>
         </div>
         <nav className="space-y-1">
           {nav.map((item) => (

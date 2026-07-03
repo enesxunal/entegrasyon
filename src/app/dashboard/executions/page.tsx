@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { formatDate, statusColor } from "@/lib/utils";
+import { statusLabel } from "@/lib/i18n/tr";
 
 export default async function ExecutionsPage() {
   const session = await getSession();
@@ -21,15 +22,15 @@ export default async function ExecutionsPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold">Executions</h1>
+      <h1 className="mb-2 text-2xl font-bold">Çalıştırmalar</h1>
       <p className="mb-8 text-slate-600">
-        Execution logs show metadata only. Full event payloads are not stored by
-        default.
+        Loglar yalnızca özet bilgi içerir. Tam olay verileri varsayılan olarak
+        saklanmaz.
       </p>
 
-      <div className="rounded-xl border bg-white divide-y">
+      <div className="divide-y rounded-xl border bg-white">
         {executions.length === 0 ? (
-          <p className="p-5 text-sm text-slate-500">No executions yet.</p>
+          <p className="p-5 text-sm text-slate-500">Henüz çalıştırma yok.</p>
         ) : (
           executions.map((ex) => (
             <Link
@@ -41,14 +42,14 @@ export default async function ExecutionsPage() {
                 <div>
                   <p className="font-medium">{ex.workflow.name}</p>
                   <p className="text-sm text-slate-500">
-                    {ex.agent?.name ?? "No agent"} · {formatDate(ex.createdAt)}
+                    {ex.agent?.name ?? "Agent yok"} · {formatDate(ex.createdAt)}
                     {ex.durationMs != null && ` · ${ex.durationMs}ms`}
                   </p>
                 </div>
                 <span
-                  className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${statusColor(ex.status)}`}
+                  className={`rounded-full px-2 py-1 text-xs font-medium ${statusColor(ex.status)}`}
                 >
-                  {ex.status}
+                  {statusLabel(ex.status)}
                 </span>
               </div>
             </Link>
